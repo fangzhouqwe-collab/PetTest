@@ -1,0 +1,72 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PetConnect AI</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "ios-blue": "#007AFF",
+                        "ios-green": "#34C759",
+                        "ios-red": "#FF3B30",
+                        "ios-bg": "#F2F2F7",
+                        "ios-card": "#FFFFFF",
+                        "ios-gray": "#8E8E93",
+                        "ios-separator": "#C6C6C8",
+                        "ios-bubble-gray": "#E9E9EB",
+                        "ios-bubble-blue": "#007AFF",
+                    },
+                    fontFamily: {
+                        "sans": ["-apple-system", "BlinkMacSystemFont", "Noto Sans SC", "SF Pro Text", "Helvetica Neue", "sans-serif"],
+                    },
+                },
+            },
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer base {
+            body {
+                @apply font-sans antialiased bg-ios-bg text-black selection:bg-ios-blue/20;
+            }
+        }
+        .ios-blur {
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+            font-size: 24px;
+        }
+        .material-symbols-fill {
+            font-variation-settings: 'FILL' 1, 'wght' 400;
+        }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.38.0"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body class="flex justify-center min-h-screen bg-[#D1D1D6]">
+    <!-- 调整 max-w-[540px] 整体尺寸变大 -->
+    <div id="root" class="w-full max-w-[540px] bg-ios-bg relative overflow-x-hidden shadow-2xl min-h-screen"></div>
+<script type="module" src="/index.tsx"></script>
+</body>
+</html>

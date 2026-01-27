@@ -1,0 +1,8 @@
+{
+  "name": "PetConnect AI",
+  "description": "A comprehensive pet community app with AI health consulting, marketplace, and social feed features, featuring a sleek iOS-inspired design.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ]
+}
