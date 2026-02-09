@@ -29,6 +29,7 @@ export interface Post {
   time: string;
   image: string;
   images?: string[];
+  video?: string;
   title: string;
   content: string;
   likes: number;
@@ -72,7 +73,9 @@ export interface ChatMessage {
   sender: 'user' | 'ai' | 'other';
   text?: string;
   image?: string;
+  video?: string;
   timestamp: Date;
+  read?: boolean;
 }
 
 export interface Pet {

@@ -108,9 +108,39 @@ export const clearAIChatHistory = () => {
     localStorage.removeItem(STORAGE_KEYS.AI_CHAT_HISTORY);
 };
 
+// 聊天记录相关
+export const saveChats = (chats: Record<string, any[]>) => {
+    try {
+        localStorage.setItem('petconnect_chats', JSON.stringify(chats));
+    } catch (e) {
+        console.error('保存聊天记录失败:', e);
+    }
+};
+
+export const loadChats = (): Record<string, any[]> | null => {
+    try {
+        const stored = localStorage.getItem('petconnect_chats');
+        if (stored) {
+            // 需要处理日期字符串转 Date 对象
+            const chats = JSON.parse(stored);
+            Object.keys(chats).forEach(key => {
+                chats[key] = chats[key].map((msg: any) => ({
+                    ...msg,
+                    timestamp: new Date(msg.timestamp)
+                }));
+            });
+            return chats;
+        }
+    } catch (e) {
+        console.error('加载聊天记录失败:', e);
+    }
+    return null;
+};
+
 // 清除所有数据
 export const clearAllLocalData = () => {
     Object.values(STORAGE_KEYS).forEach(key => {
         localStorage.removeItem(key);
     });
+    localStorage.removeItem('petconnect_chats');
 };

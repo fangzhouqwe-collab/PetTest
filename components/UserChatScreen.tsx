@@ -5,6 +5,7 @@ import * as messageService from '../services/messageService';
 import * as testUserService from '../services/testUserService';
 import { isSupabaseConfigured } from '../lib/supabase';
 import { useAuthContext } from '../contexts/AuthContext';
+import { uploadVideo } from '../services/uploadService';
 
 interface UserChatScreenProps {
   onBack: () => void;
@@ -29,6 +30,7 @@ const UserChatScreen: React.FC<UserChatScreenProps> = ({
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
   // 加载消息
@@ -127,6 +129,33 @@ const UserChatScreen: React.FC<UserChatScreenProps> = ({
     }
   };
 
+  const sendVideo = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (f) {
+      setIsSending(true);
+      try {
+        const result = await uploadVideo(f);
+        if (result.success && result.url) {
+          const newVideoMsg: ChatMessage = {
+            id: Date.now().toString(),
+            sender: 'user',
+            video: result.url,
+            text: '[视频]',
+            timestamp: new Date()
+          };
+          setChatMessages(prev => [...prev, newVideoMsg]);
+          onSendMessage(targetId, newVideoMsg);
+        } else {
+          alert(result.error || '视频上传失败');
+        }
+      } catch (error) {
+        alert('视频上传失败，请重试');
+      } finally {
+        setIsSending(false);
+      }
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen bg-[#F2F2F7] animate-in slide-in-from-right duration-300 overflow-hidden max-w-[540px] mx-auto shadow-2xl relative">
       <header className="fixed top-0 w-full max-w-[540px] z-50 ios-blur bg-white/80 h-[96px] pt-12 px-6 flex items-center border-b border-black/5">
@@ -166,12 +195,18 @@ const UserChatScreen: React.FC<UserChatScreenProps> = ({
             <div key={m.id} className={`flex flex-col ${m.sender === 'user' ? 'items-end' : 'items-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
               <div className={`max-w-[85%] rounded-[22px] px-5 py-3 text-[17px] shadow-sm leading-relaxed relative ${m.sender === 'user' ? 'bg-ios-blue text-white rounded-tr-none' : 'bg-white text-black rounded-tl-none border border-black/5'
                 }`}>
+                {m.video && <video src={m.video} className="rounded-xl mb-2 w-full shadow-inner" controls />}
                 {m.image && <img src={m.image} className="rounded-xl mb-2 w-full shadow-inner" />}
-                {m.text && m.text !== '[图片]' && m.text}
+                {m.text && m.text !== '[图片]' && m.text !== '[视频]' && m.text}
               </div>
-              <span className="text-[11px] text-ios-gray mt-1.5 px-2 font-medium opacity-60">
-                {m.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </span>
+              <div className="flex items-center gap-2 mt-1.5 px-2">
+                {m.sender === 'user' && (
+                  <span className="text-[10px] text-ios-green font-medium">已读</span>
+                )}
+                <span className="text-[11px] text-ios-gray font-medium opacity-60">
+                  {m.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              </div>
             </div>
           ))
         )}
@@ -179,10 +214,14 @@ const UserChatScreen: React.FC<UserChatScreenProps> = ({
       </main>
 
       <div className="fixed bottom-0 w-full max-w-[540px] bg-white border-t border-black/5 px-4 py-4 flex items-center gap-4 shadow-[0_-2px_15px_rgba(0,0,0,0.03)] min-h-[76px] pb-10">
-        <button onClick={() => fileRef.current?.click()} className="text-ios-blue active:scale-90 transition-transform shrink-0">
-          <span className="material-symbols-outlined !text-[34px] text-ios-blue/90">add_circle</span>
-        </button>
-        <input ref={fileRef} type="file" className="hidden" accept="image/*" onChange={sendImage} />
+        <label className="text-ios-blue active:scale-90 transition-transform shrink-0 cursor-pointer">
+          <span className="material-symbols-outlined !text-[28px] text-ios-blue/90">image</span>
+          <input type="file" className="hidden" accept="image/*" onChange={sendImage} />
+        </label>
+        <label className="text-ios-blue active:scale-90 transition-transform shrink-0 cursor-pointer">
+          <span className="material-symbols-outlined !text-[28px] text-ios-blue/90">videocam</span>
+          <input type="file" className="hidden" accept="video/mp4,video/webm,video/mov" onChange={sendVideo} />
+        </label>
 
         <div className="flex-1 bg-black/5 rounded-[24px] px-5 py-2.5 flex items-center transition-all focus-within:bg-black/10 focus-within:ring-1 focus-within:ring-ios-blue/10">
           <input

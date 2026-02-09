@@ -9,6 +9,8 @@ export interface Post {
     breed: string;
     time: string;
     image: string;
+    video?: string; // 新增视频字段
+    userId?: string; // 作者 ID
     title: string;
     content: string;
     likes: number;
@@ -32,15 +34,24 @@ const formatTime = (dateStr: string): string => {
     const date = new Date(dateStr);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return '刚刚';
-    if (diffMins < 60) return `${diffMins}分钟前`;
-    if (diffHours < 24) return `${diffHours}小时前`;
-    if (diffDays < 7) return `${diffDays}天前`;
-    return date.toLocaleDateString('zh-CN');
+    // 如果小于1分钟
+    if (diffMs < 60000) return '刚刚';
+
+    // 如果是今天
+    if (date.toDateString() === now.toDateString()) {
+        return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    // 如果是昨天
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    if (date.toDateString() === yesterday.toDateString()) {
+        return `昨天 ${date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}`;
+    }
+
+    // 显示完整日期时间
+    return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}`;
 };
 
 // 获取帖子列表
@@ -94,6 +105,7 @@ export const getPosts = async (options?: {
             breed: post.breed || '宠物',
             time: formatTime(post.created_at),
             image: post.image_url || 'https://picsum.photos/seed/post/400/400',
+            video: post.video_url || undefined,
             title: post.title,
             content: post.content,
             likes: post.likes_count,
@@ -147,6 +159,7 @@ export const getPostById = async (postId: string): Promise<Post | null> => {
         breed: p.breed || '宠物',
         time: formatTime(p.created_at),
         image: p.image_url || 'https://picsum.photos/seed/post/400/400',
+        video: p.video_url || undefined,
         title: p.title,
         content: p.content,
         likes: p.likes_count,
@@ -169,6 +182,7 @@ export const createPost = async (data: {
     title: string;
     content: string;
     image_url?: string;
+    video_url?: string;
     breed?: string;
     location?: string;
 }): Promise<Post | null> => {
@@ -184,6 +198,7 @@ export const createPost = async (data: {
             title: data.title,
             content: data.content,
             image_url: data.image_url,
+            video_url: data.video_url,
             breed: data.breed || '我家宠宝',
             location: data.location
         } as any)

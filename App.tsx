@@ -11,7 +11,7 @@ import UserChatScreen from './components/UserChatScreen';
 import Navigation from './components/Navigation';
 import DetailView from './components/DetailView';
 import AuthScreen from './components/AuthScreen';
-import UserSwitcher from './components/UserSwitcher';
+import NotificationScreen from './components/NotificationScreen';
 import { useAuthContext } from './contexts/AuthContext';
 
 // 后端服务
@@ -121,6 +121,11 @@ const App: React.FC = () => {
       // 注意：不要加载用户资料，除非明确是演示模式
       // 这里默认重置为 DEMO_USER，确保登出后不显示上一个用户的资料
       setUserProfile(DEMO_USER);
+
+      const savedChats = localStorageService.loadChats();
+      if (savedChats) {
+        setAllChats(savedChats);
+      }
     }
   }, [isAuthenticated, user]);
 
@@ -146,6 +151,18 @@ const App: React.FC = () => {
       if (profileData) {
         setUserProfile(profileData);
       }
+
+      // 加载消息列表
+      const threads = await messageService.getThreads();
+      if (threads.length > 0) {
+        const newLastMessages: Record<string, string> = {};
+        threads.forEach(t => {
+          if (t.lastMessage) {
+            newLastMessages[t.id] = t.lastMessage;
+          }
+        });
+        setLastMessages(newLastMessages);
+      }
     } catch (error) {
       console.error('加载数据失败:', error);
     } finally {
@@ -160,6 +177,28 @@ const App: React.FC = () => {
       loadData();
     }
   }, [user, loadData]);
+
+  // 加载当前会话的云端消息
+  useEffect(() => {
+    const loadChatHistory = async () => {
+      if (user && currentTab === AppTab.USER_CHAT && chatTarget?.id) {
+        try {
+          const messages = await messageService.getMessages(chatTarget.id);
+          // 哪怕是空数组也设置，以覆盖本地可能的旧数据（或者合并？）
+          // 这里选择直接覆盖，即以云端为准
+          if (messages) {
+            setAllChats(prev => ({
+              ...prev,
+              [chatTarget.id]: messages
+            }));
+          }
+        } catch (error) {
+          console.error('加载历史消息失败:', error);
+        }
+      }
+    };
+    loadChatHistory();
+  }, [user, currentTab, chatTarget?.id]);
 
   const navigateTo = (tab: AppTab) => {
     setHistory(prev => [...prev, currentTab]);
@@ -181,17 +220,51 @@ const App: React.FC = () => {
     setTimeout(() => setShareMessage(null), 2000);
   };
 
-  const handleSendMessage = (targetId: string, message: ChatMessage) => {
-    setAllChats(prev => ({
-      ...prev,
-      [targetId]: [...(prev[targetId] || []), message]
-    }));
-    // 更新最新消息记录
+  const handleSendMessage = async (targetId: string, message: ChatMessage) => {
+    // 乐观更新（立即显示）
+    // 注意：如果是云端模式，我们可能需要等待后端返回真实 ID 和 timestamp
+    // 但为了体验，先显示 pending 状态或直接显示
+
+    // 更新本地状态
+    setAllChats(prev => {
+      const updated = {
+        ...prev,
+        [targetId]: [...(prev[targetId] || []), message]
+      };
+
+      // 仅在演示模式下保存到 localStorage
+      if (!user) {
+        localStorageService.saveChats(updated);
+      }
+      return updated;
+    });
+
+    // 更新最近消息列表
     if (message.text) {
       setLastMessages(prev => ({
         ...prev,
         [targetId]: message.text || '[图片]'
       }));
+    }
+
+    // 云端同步
+    if (user) {
+      try {
+        const sentMsg = await messageService.sendMessage(
+          targetId,
+          message.text || '',
+          message.image,
+          message.video
+        );
+
+        if (sentMsg) {
+          // 如果后端返回了完整消息（包含真实 ID），可以在这里更新本地状态中的那条消息
+          // 但简单起见，我们假设乐观更新是足够的，或者之后重新加载时会修正
+        }
+      } catch (error) {
+        console.error('发送消息失败:', error);
+        // 可以添加 UI 提示发送失败
+      }
     }
   };
 
@@ -202,6 +275,7 @@ const App: React.FC = () => {
         title: newPost.title || '无标题',
         content: newPost.content || '',
         image_url: newPost.image,
+        video_url: newPost.video, // 传递视频 URL
         location: newPost.location
       });
       if (created) {
@@ -222,7 +296,8 @@ const App: React.FC = () => {
         comments: 0,
         commentsList: [],
         location: newPost.location,
-        isMine: true
+        isMine: true,
+        video: newPost.video // 本地状态也保存 video
       };
       setPosts(prev => {
         const updated = [post, ...prev];
@@ -462,18 +537,6 @@ const App: React.FC = () => {
         <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[1000] bg-black/80 text-white px-6 py-2 rounded-full text-sm font-bold animate-in fade-in slide-in-from-top-4 duration-300">
           {shareMessage}
         </div>
-      )}
-      {/* 用户切换器（仅演示模式） */}
-      {!user && isAuthenticated && (
-        <UserSwitcher
-          onUserChange={(newUser) => {
-            setTestUser(newUser);
-            setRefreshKey(prev => prev + 1);
-            // 重置到首页
-            setCurrentTab(AppTab.HOME);
-            setHistory([]);
-          }}
-        />
       )}
     </div>
   );

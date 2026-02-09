@@ -29,12 +29,23 @@ const formatTime = (dateStr: string): string => {
     const diffMs = now.getTime() - date.getTime();
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffDays === 0) {
+    // 如果小于1分钟
+    if (diffMs < 60000) return '刚刚';
+
+    // 如果是今天
+    if (date.toDateString() === now.toDateString()) {
         return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
     }
-    if (diffDays === 1) return '昨天';
-    if (diffDays < 7) return `${diffDays}天前`;
-    return date.toLocaleDateString('zh-CN');
+
+    // 如果是昨天
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    if (date.toDateString() === yesterday.toDateString()) {
+        return `昨天 ${date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}`;
+    }
+
+    // 显示完整日期时间
+    return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}`;
 };
 
 // 获取消息会话列表
@@ -101,12 +112,13 @@ export const getMessages = async (threadId: string): Promise<ChatMessage[]> => {
         sender: msg.sender_id === userId ? 'user' : 'other',
         text: msg.text || '',
         image: msg.image_url || undefined,
+        video: msg.video_url || undefined,
         timestamp: new Date(msg.created_at)
     }));
 };
 
 // 发送消息
-export const sendMessage = async (threadId: string, text: string, imageUrl?: string): Promise<ChatMessage | null> => {
+export const sendMessage = async (threadId: string, text: string, imageUrl?: string, videoUrl?: string): Promise<ChatMessage | null> => {
     if (!isSupabaseConfigured) return null;
 
     const userId = await getCurrentUserId();
@@ -118,7 +130,8 @@ export const sendMessage = async (threadId: string, text: string, imageUrl?: str
             thread_id: threadId,
             sender_id: userId,
             text,
-            image_url: imageUrl
+            image_url: imageUrl,
+            video_url: videoUrl
         } as any)
         .select()
         .single();
@@ -132,7 +145,7 @@ export const sendMessage = async (threadId: string, text: string, imageUrl?: str
     await supabase
         .from('message_threads')
         .update({
-            last_message: text || '[图片]',
+            last_message: text || (imageUrl ? '[图片]' : (videoUrl ? '[视频]' : '')),
             last_message_at: new Date().toISOString()
         } as any)
         .eq('id', threadId);
@@ -143,6 +156,7 @@ export const sendMessage = async (threadId: string, text: string, imageUrl?: str
         sender: 'user',
         text: m.text || '',
         image: m.image_url || undefined,
+        video: m.video_url || undefined,
         timestamp: new Date(m.created_at)
     };
 };
@@ -205,6 +219,7 @@ export const subscribeToMessages = (threadId: string, callback: (message: ChatMe
                     sender: msg.sender_id === userId ? 'user' : 'other',
                     text: msg.text || '',
                     image: msg.image_url || undefined,
+                    video: msg.video_url || undefined,
                     timestamp: new Date(msg.created_at)
                 });
             }

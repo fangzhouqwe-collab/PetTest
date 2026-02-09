@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { Post } from '../types';
+import { getCurrentLocation } from '../services/qqMapService';
 
 interface FeedScreenProps {
   posts: Post[];
@@ -16,30 +17,16 @@ const FeedScreen: React.FC<FeedScreenProps> = ({ posts, onConsultAI, onPostClick
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        async (pos) => {
-          const { latitude, longitude } = pos.coords;
-          try {
-            // 尝试使用 OpenStreetMap Nominatim API 获取大概位置 (仅限客户端使用)
-            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10`);
-            if (res.ok) {
-              const data = await res.json();
-              // 提取有意义的地理名称
-              const city = data.address?.city || data.address?.district || data.address?.state || '未知位置';
-              setMyLocation(city);
-            } else {
-              setMyLocation(`${latitude.toFixed(2)}, ${longitude.toFixed(2)}`);
-            }
-          } catch (e) {
-            setMyLocation(`${latitude.toFixed(2)}, ${longitude.toFixed(2)}`);
-          }
-        },
-        () => setMyLocation('定位失败')
-      );
-    } else {
-      setMyLocation('位置不可用');
-    }
+    const fetchLocation = async () => {
+      try {
+        const result = await getCurrentLocation();
+        setMyLocation(result.formatted);
+      } catch (error) {
+        console.error('定位失败:', error);
+        setMyLocation('定位失败');
+      }
+    };
+    fetchLocation();
   }, []);
 
   const handleNotification = () => {
@@ -133,12 +120,16 @@ const FeedScreen: React.FC<FeedScreenProps> = ({ posts, onConsultAI, onPostClick
                 </div>
               )}
             </div>
-            {post.images && post.images.length > 1 ? (
+            {post.video ? (
+              <div className="w-full bg-black relative" onClick={(e) => { e.stopPropagation(); }}>
+                <video src={post.video} className="w-full aspect-video object-cover" controls poster={post.image} />
+              </div>
+            ) : post.images && post.images.length > 1 ? (
               <div className="w-full bg-ios-bg overflow-x-auto snap-x snap-mandatory flex no-scrollbar">
                 {post.images.map((img, idx) => (
                   <div key={idx} className="w-full shrink-0 aspect-square snap-center relative">
                     <img src={img} className="w-full h-full object-cover" loading="lazy" />
-                    <div className="absolute top-2 right-2 bg-black/50 text-white text-[10px] px-2 py-1 rounded-full px-2">
+                    <div className="absolute top-2 right-2 bg-black/50 text-white text-[10px] px-2 py-1 rounded-full">
                       {idx + 1}/{post.images?.length}
                     </div>
                   </div>

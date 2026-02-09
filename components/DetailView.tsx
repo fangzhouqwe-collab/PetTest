@@ -37,22 +37,35 @@ const DetailView: React.FC<DetailViewProps> = ({ type, data, onBack, onChat, onA
       </header>
 
       <div className="pt-[88px] pb-32 max-w-[540px] mx-auto w-full">
-        {data.images && data.images.length > 1 ? (
-          <div className="w-full bg-ios-bg overflow-x-auto snap-x snap-mandatory flex no-scrollbar">
-            {data.images.map((img: string, idx: number) => (
-              <div key={idx} className="w-full shrink-0 aspect-square snap-center relative">
-                <img src={img} className="w-full h-full object-cover" />
-                <div className="absolute bottom-2 right-2 bg-black/50 text-white text-[10px] px-2 py-1 rounded-full">
-                  {idx + 1}/{data.images.length}
-                </div>
-              </div>
-            ))}
+        {/* 媒体展示区：视频 + 多图滑动 */}
+        {data.video ? (
+          <div className="w-full bg-black">
+            <video src={data.video} className="w-full aspect-video object-contain" controls autoPlay={false} />
           </div>
-        ) : (
+        ) : data.images && data.images.length > 1 ? (
+          <div className="relative">
+            <div className="w-full bg-ios-bg overflow-x-auto snap-x snap-mandatory flex no-scrollbar scroll-smooth">
+              {data.images.map((img: string, idx: number) => (
+                <div key={idx} className="w-full shrink-0 aspect-square snap-center">
+                  <img src={img} className="w-full h-full object-cover" />
+                </div>
+              ))}
+            </div>
+            {/* 分页指示器 */}
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+              {data.images.map((_: string, idx: number) => (
+                <div key={idx} className="w-2 h-2 rounded-full bg-white/60 shadow-sm" />
+              ))}
+            </div>
+            <div className="absolute bottom-3 right-3 bg-black/50 text-white text-[11px] px-2.5 py-1 rounded-full font-medium">
+              1/{data.images.length}
+            </div>
+          </div>
+        ) : data.image ? (
           <div className="aspect-square bg-ios-bg">
             <img src={data.image} className="w-full h-full object-cover" />
           </div>
-        )}
+        ) : null}
 
         {type === 'post' ? (
           <>

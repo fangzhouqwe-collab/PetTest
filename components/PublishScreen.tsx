@@ -1,6 +1,8 @@
 
 import React, { useState, useRef } from 'react';
 import { Post, MarketItem } from '../types';
+import { getCurrentLocation } from '../services/qqMapService';
+import { uploadVideo } from '../services/uploadService';
 
 interface PublishScreenProps {
   onCancel: () => void;
@@ -25,8 +27,12 @@ const PublishScreen: React.FC<PublishScreenProps> = ({ onCancel, onSelectAI, onP
   const [vaccines, setVaccines] = useState(false);
   const [dewormed, setDewormed] = useState(false);
   const [tags, setTags] = useState<string[]>([]); // 改为数组
+  const [video, setVideo] = useState<string>('');
 
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const [isUploading, setIsUploading] = useState(false);
+  const videoRef = useRef<HTMLInputElement>(null);
 
   const handlePublish = () => {
     if (type === 'post') {
@@ -36,6 +42,7 @@ const PublishScreen: React.FC<PublishScreenProps> = ({ onCancel, onSelectAI, onP
         content: tagContent + content,
         image: images[0] || undefined,
         images: images,
+        video: video || undefined,
         location: location || undefined
       });
     } else {
@@ -77,9 +84,43 @@ const PublishScreen: React.FC<PublishScreenProps> = ({ onCancel, onSelectAI, onP
     setImages(prev => prev.filter((_, i) => i !== index));
   };
 
-  const toggleLocation = () => {
-    if (location) setLocation('');
-    else setLocation('上海 · 浦东新区');
+  const onVideoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setIsUploading(true);
+      try {
+        const result = await uploadVideo(file);
+        if (result.success && result.url) {
+          setVideo(result.url);
+        } else {
+          alert(result.error || '视频上传失败');
+        }
+      } catch (error) {
+        alert('视频上传失败，请重试');
+      } finally {
+        setIsUploading(false);
+      }
+    }
+  };
+
+  const removeVideo = () => {
+    setVideo('');
+  };
+
+  const toggleLocation = async () => {
+    if (location) {
+      setLocation('');
+    } else {
+      setLocation('定位中...');
+      try {
+        const result = await getCurrentLocation();
+        setLocation(result.formatted);
+      } catch (error) {
+        console.error('定位失败:', error);
+        setLocation('');
+        alert(error instanceof Error ? error.message : '定位失败');
+      }
+    }
   };
 
   if (step === 'form') {
@@ -115,6 +156,34 @@ const PublishScreen: React.FC<PublishScreenProps> = ({ onCancel, onSelectAI, onP
             </div>
           </div>
           <input ref={fileRef} type="file" className="hidden" accept="image/*" multiple onChange={onImageChange} />
+
+          {/* 视频展示区 */}
+          {type === 'post' && (
+            <div className="flex gap-3 pb-2">
+              {isUploading ? (
+                <div className="w-28 h-28 shrink-0 bg-ios-bg rounded-2xl flex flex-col items-center justify-center text-ios-blue border-2 border-ios-blue">
+                  <span className="material-symbols-outlined !text-[32px] animate-spin">progress_activity</span>
+                  <span className="text-[12px] mt-1">上传中...</span>
+                </div>
+              ) : video ? (
+                <div className="w-full relative rounded-2xl overflow-hidden">
+                  <video src={video} className="w-full h-40 object-cover" controls />
+                  <button
+                    onClick={removeVideo}
+                    className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1"
+                  >
+                    <span className="material-symbols-outlined !text-[16px]">close</span>
+                  </button>
+                </div>
+              ) : (
+                <label className="w-28 h-28 shrink-0 bg-ios-bg rounded-2xl flex flex-col items-center justify-center text-ios-gray border-2 border-dashed border-ios-separator cursor-pointer active:scale-95 transition-transform">
+                  <span className="material-symbols-outlined !text-[32px]">videocam</span>
+                  <span className="text-[12px] mt-1">添加视频</span>
+                  <input type="file" className="hidden" accept="video/mp4,video/webm,video/mov" onChange={onVideoChange} />
+                </label>
+              )}
+            </div>
+          )}
 
           <input
             className="w-full text-2xl font-bold border-none focus:ring-0 p-0 placeholder:text-ios-gray/40"
