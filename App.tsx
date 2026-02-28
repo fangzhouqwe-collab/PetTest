@@ -13,6 +13,7 @@ import DetailView from './components/DetailView';
 import AuthScreen from './components/AuthScreen';
 import NotificationScreen from './components/NotificationScreen';
 import CartScreen from './components/CartScreen';
+import FavoritesScreen from './components/FavoritesScreen';
 import AddressManager from './components/AddressManager';
 import OrderHistory from './components/OrderHistory';
 import HistoryScreen from './components/HistoryScreen';
@@ -45,10 +46,10 @@ const DEMO_POSTS: Post[] = [
   {
     id: '2',
     author: '马库斯喵',
-    avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAItDmawV6z1hMnaU41hKJ2FJAKSSiNKTG0Zye3VKj1PNGsbeunTOCstMv9YI_qSJsLPWExIT-21Rdtf3vc3AydkIlWdPdYm3RO1aDSvXr1FyQ7tjj0iQhd2_m_A2DDp_GkXyoAhx9zbmieYhg_LayA4gE8SF6Nzu8mUy3KwhRTMp7AjbqpNojFCbB2DxMWJLrsVtLjREsgvrxC110kZ8YHhQaZGwEE-bfilsPgK4FaXhkeNrsI9Nf8KKleYjm6VBmsOESs7nTsWmg',
+    avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAItDmawV6z1hMnaU41hKJ2FJAKSSiNKTG0Zye3VKj1PNGsbeunTOCstMv9YI_qSJsLPWExIT-21Rdtf3vc3AydkIlWdPdYm3RO1aDSXXr1FyQ7tjj0iQhd2_m_A2DDp_GkXyoAhx9zbmieYhg_LayA4gE8SF6Nzu8mUy3KwhRTMp7AjbqpNojFCbB2DxMWJLrsVtLjREsgvrxC110kZ8YHhQaZGwEE-bfilsPgK4FaXhkeNrsI9Nf8KKleYjm6VBmsOESs7nTsWmg',
     breed: '波斯猫',
     time: '5小时前',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAwemHjkLSWoRHHqf5xbMjrC_Dq7MbGEG41pf9TABn3FNS0EJocgWSXqsnScekVRT9C5vlIMzYKJEjR7Dr2L-24UgjHuogbPTz5yfWy8UQlrzi9L1X0roozwyPX2_jlLiWjHndX6lxpfB8Ok18HYdcMnyxXdCL2XMitZRIhKhfqQ-WvwCkGOrRRtTJ3O8bpbF8ukfi6ZO2Cn9fOBzVdentcmrDMjwDQ2Mem74hI6qiv9liwis9YIoBBdot99cDbF4mwKZ2j-w7MQF4',
+    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAwemHjkLSWoRHHqf5xbMjrC_Dq7MbGEG41pf9TABn3FNS0EJocgWSXqsnScekVRT9C5vlIMzYKJEjR7Dr2L-24UgjHuogbPTz5yfWy8UQlrzi9L1X0roozwyPX2_jlLiWjHndX6lxpfB8Ok18HYdcMnyXXdCL2XMitZRIhKhfqQ-WvwCkGOrRRtTJ3O8bpbF8ukfi6ZO2Cn9fOBzVdentcmrDMjwDQ2Mem74hI6qiv9liwis9YIoBBdot99cDbF4mwKZ2j-w7MQF4',
     title: '与 Luna 的懒散周日',
     content: 'Luna 已经连续睡了 16 个小时。我真希望我也能过上她的生活。☁️',
     likes: 3421,
@@ -109,6 +110,7 @@ const App: React.FC = () => {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [viewHistory, setViewHistory] = useState<(Post | MarketItem)[]>([]);
+  const [favoriteItemIds, setFavoriteItemIds] = useState<string[]>([]);
   const [shareData, setShareData] = useState<{ title: string, data?: any } | null>(null);
 
   // 初始化测试消息数据和加载本地数据
@@ -493,7 +495,7 @@ const App: React.FC = () => {
   const renderScreen = () => {
     switch (currentTab) {
       case AppTab.HOME:
-        return <FeedScreen posts={posts} onConsultAI={() => navigateTo(AppTab.AI_CHAT)} onPostClick={(p) => {
+        return <FeedScreen userProfile={userProfile} posts={posts} onConsultAI={() => navigateTo(AppTab.AI_CHAT)} onPostClick={(p) => {
           setSelectedPost(p);
           setViewHistory(prev => [p, ...prev.filter(i => i.id !== p.id)]);
           navigateTo(AppTab.POST_DETAIL);
@@ -574,7 +576,36 @@ const App: React.FC = () => {
           }}
         />;
       case AppTab.MARKET_DETAIL:
-        return <DetailView type="market" data={selectedItem} onBack={goBack} onChat={(n, a) => { setChatTarget({ id: 'seller', name: n, avatar: a }); navigateTo(AppTab.USER_CHAT); }} onShare={(t) => handleShare(t, selectedItem)} onAddToCart={handleAddToCart} />;
+        return <DetailView
+          type="market"
+          data={selectedItem}
+          onBack={goBack}
+          onChat={async (n, a) => {
+            if (!user) return;
+            if (selectedItem?.userId) {
+              const threadId = await messageService.createThread(selectedItem.userId);
+              if (threadId) {
+                setChatTarget({ id: threadId, name: n, avatar: a });
+                navigateTo(AppTab.USER_CHAT);
+              }
+            } else {
+              setChatTarget({ id: `chat_${Date.now()}`, name: n, avatar: a });
+              navigateTo(AppTab.USER_CHAT);
+            }
+          }}
+          onShare={(t) => handleShare(t, selectedItem)}
+          onAddToCart={handleAddToCart}
+          isFavorite={selectedItem ? favoriteItemIds.includes(selectedItem.id) : false}
+          onToggleFavorite={() => {
+            if (!selectedItem) return;
+            setFavoriteItemIds(prev => {
+              const next = prev.includes(selectedItem.id) ? prev.filter(id => id !== selectedItem.id) : [...prev, selectedItem.id];
+              setShareMessage(next.includes(selectedItem.id) ? "已添加至收藏" : "已取消收藏");
+              setTimeout(() => setShareMessage(null), 2000);
+              return next;
+            });
+          }}
+        />;
       case AppTab.NOTIFICATIONS:
         return <NotificationScreen onBack={goBack} />;
       case AppTab.CART:
@@ -603,6 +634,21 @@ const App: React.FC = () => {
             navigateTo(AppTab.ORDERS);
           }}
           onBack={goBack}
+        />;
+      case AppTab.FAVORITES:
+        return <FavoritesScreen
+          items={marketItems.filter(i => favoriteItemIds.includes(i.id))}
+          onBack={goBack}
+          onItemClick={(i) => {
+            setSelectedItem(i);
+            setViewHistory(prev => [i, ...prev.filter(item => item.id !== i.id)]);
+            navigateTo(AppTab.MARKET_DETAIL);
+          }}
+          onRemoveFavorite={(id) => {
+            setFavoriteItemIds(prev => prev.filter(fid => fid !== id));
+            setShareMessage("已取消收藏");
+            setTimeout(() => setShareMessage(null), 2000);
+          }}
         />;
       case AppTab.ADDRESS:
         return <AddressManager

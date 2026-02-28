@@ -139,6 +139,10 @@ const MessageScreen: React.FC<MessageScreenProps> = ({ onOpenAIChat, onUserClick
     };
 
     loadThreads();
+    let interval: NodeJS.Timeout;
+    if (user) {
+      interval = setInterval(loadThreads, 3000);
+    }
 
     // 点击外部取消搜索高亮状态
     const handleClickOutside = (e: MouseEvent) => {
@@ -147,7 +151,10 @@ const MessageScreen: React.FC<MessageScreenProps> = ({ onOpenAIChat, onUserClick
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      if (interval) clearInterval(interval);
+    };
   }, [user]);
 
   // 根据 lastMessages 更新显示的消息

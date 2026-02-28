@@ -13,7 +13,8 @@ export enum AppTab {
   CART = 'cart',
   ORDERS = 'orders',
   ADDRESS = 'address',
-  HISTORY = 'history'
+  HISTORY = 'history',
+  FAVORITES = 'favorites',
 }
 
 export interface Comment {
@@ -46,6 +47,7 @@ export interface Post {
 
 export interface MarketItem {
   id: string;
+  userId?: string;
   image: string;
   price: number;
   name: string;

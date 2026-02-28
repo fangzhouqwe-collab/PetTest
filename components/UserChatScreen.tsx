@@ -91,12 +91,15 @@ const UserChatScreen: React.FC<UserChatScreenProps> = ({
     setChatMessages(prev => [...prev, newMsg]);
 
     try {
-      if (user && isSupabaseConfigured) {
+      if (user && isSupabaseConfigured && !targetId.startsWith('chat_')) {
         // 发送到数据库
         await messageService.sendMessage(targetId, text);
       } else {
         // 演示模式：使用测试服务
         testUserService.sendTestMessage(targetId, text);
+        if (targetId.startsWith('chat_') && user) {
+          alert('提示：当前为模拟卖家的商品或帖子，您的消息仅在本次本地测试中可见。发布属于自己的真实商品后即可全网连通！');
+        }
       }
 
       // 更新父组件的消息记录（用于消息列表预览）

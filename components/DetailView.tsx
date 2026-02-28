@@ -11,9 +11,11 @@ interface DetailViewProps {
   onToggleLike?: (postId: string) => void;
   onShare?: (title: string) => void;
   onAddToCart?: (product: Product) => void;
+  isFavorite?: boolean;
+  onToggleFavorite?: () => void;
 }
 
-const DetailView: React.FC<DetailViewProps> = ({ type, data, onBack, onChat, onAddComment, onToggleLike, onShare, onAddToCart }) => {
+const DetailView: React.FC<DetailViewProps> = ({ type, data, onBack, onChat, onAddComment, onToggleLike, onShare, onAddToCart, isFavorite, onToggleFavorite }) => {
   const [commentInput, setCommentInput] = useState('');
   if (!data) return null;
 
@@ -173,9 +175,9 @@ const DetailView: React.FC<DetailViewProps> = ({ type, data, onBack, onChat, onA
           </div>
         ) : (
           <div className="flex items-center gap-2 w-full">
-            <button className="flex flex-col items-center justify-center text-ios-gray px-1 active:opacity-60 transition-opacity whitespace-nowrap min-w-[36px]">
-              <span className="material-symbols-outlined !text-[20px]">star</span>
-              <span className="text-[10px] mt-0.5">收藏</span>
+            <button onClick={onToggleFavorite} className={`flex flex-col items-center justify-center px-1 active:opacity-60 transition-opacity whitespace-nowrap min-w-[36px] ${isFavorite ? 'text-orange-500' : 'text-ios-gray'}`}>
+              <span className={`material-symbols-outlined !text-[20px] ${isFavorite ? 'material-symbols-fill' : ''}`}>star</span>
+              <span className="text-[10px] mt-0.5">{isFavorite ? '已收藏' : '收藏'}</span>
             </button>
             <button onClick={() => onAddToCart?.(data)} className="flex flex-col items-center justify-center text-ios-gray px-1 active:opacity-60 transition-opacity whitespace-nowrap min-w-[36px]">
               <span className="material-symbols-outlined !text-[20px]">add_shopping_cart</span>

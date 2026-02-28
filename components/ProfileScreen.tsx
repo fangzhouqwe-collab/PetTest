@@ -226,12 +226,16 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, posts, marketItems,
 
       {/* 功能快捷入口 - 新增 */}
       <section className="px-4 mt-4">
-        <div className="bg-ios-card rounded-3xl p-4 grid grid-cols-4 gap-2 shadow-sm border border-ios-separator transition-colors duration-300">
+        <div className="bg-ios-card rounded-3xl p-4 grid grid-cols-4 gap-y-4 gap-x-2 shadow-sm border border-ios-separator transition-colors duration-300">
           {[
             { label: '订单管理', icon: 'receipt_long', color: 'text-orange-500', bg: 'bg-orange-50', tab: AppTab.ORDERS },
             { label: '购物车', icon: 'shopping_cart', color: 'text-green-500', bg: 'bg-green-50', tab: AppTab.CART },
-            { label: '足迹/历史', icon: 'history', color: 'text-blue-500', bg: 'bg-blue-50' }, // 后续接入浏览历史页
+            { label: '足迹/历史', icon: 'history', color: 'text-blue-500', bg: 'bg-blue-50' },
             { label: '地址管理', icon: 'location_on', color: 'text-purple-500', bg: 'bg-purple-50', tab: AppTab.ADDRESS },
+            { label: '我的收藏', icon: 'favorite', color: 'text-red-500', bg: 'bg-red-50', tab: AppTab.FAVORITES },
+            { label: '我卖出的', icon: 'storefront', color: 'text-indigo-500', bg: 'bg-indigo-50' },
+            { label: '待评价', icon: 'rate_review', color: 'text-yellow-500', bg: 'bg-yellow-50' },
+            { label: '客服中心', icon: 'support_agent', color: 'text-teal-500', bg: 'bg-teal-50' },
           ].map((item, i) => (
             <button key={i} onClick={() => item.tab ? onNavigate?.(item.tab) : alert('功能接入中')} className="flex flex-col items-center gap-2 py-2 active:scale-95 transition-transform">
               <div className={`size-11 rounded-2xl ${item.bg} flex items-center justify-center`}>
@@ -259,9 +263,9 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, posts, marketItems,
             <div
               key={i}
               onClick={() => { setSelectedPet(pet); setShowPetDetail(true); }}
-              className="bg-ios-card rounded-[24px] bg-ios-card border border-ios-separator shadow-none active:scale-95 transition-all group flex flex-col"
+              className="bg-ios-card rounded-[24px] border border-ios-separator shadow-none active:scale-95 transition-all group flex flex-col w-[140px] shrink-0"
             >
-              <div className="aspect-square w-full relative overflow-hidden">
+              <div className="aspect-square w-full relative overflow-hidden rounded-t-[24px]">
                 <img src={pet.img} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                 {pet.gender && pet.gender !== '未知' && (
                   <div className={`absolute top-2 right-2 size-6 rounded-full ios-blur ${pet.gender === '公' ? 'bg-ios-blue/20 text-ios-blue' : 'bg-ios-red/20 text-ios-red'} flex items-center justify-center border border-white/40`}>

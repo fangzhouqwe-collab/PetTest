@@ -370,11 +370,11 @@ const PublishScreen: React.FC<PublishScreenProps> = ({ onCancel, onSelectAI, onP
         </div>
       </div>
       <main className="flex-1 p-6 space-y-6">
-        <button onClick={() => { setType('post'); setStep('form'); }} className="w-full bg-ios-card shadow-lg border border-ios-separator">
+        <button onClick={() => { setType('post'); setStep('form'); }} className="w-full flex justify-start items-center gap-4 text-left p-6 rounded-3xl bg-ios-card shadow-lg border border-ios-separator active:scale-[0.98] transition-all">
           <div className="w-16 h-16 bg-ios-blue/10 rounded-2xl flex items-center justify-center text-ios-blue shrink-0"><span className="material-symbols-outlined !text-[36px] material-symbols-fill">photo_library</span></div>
           <div><h3 className="font-bold text-xl mb-1">发布动态</h3><p className="text-sm text-ios-gray font-medium">分享可爱的宠物日常</p></div>
         </button>
-        <button onClick={() => { setType('market'); setStep('form'); }} className="w-full bg-ios-card shadow-lg border border-ios-separator">
+        <button onClick={() => { setType('market'); setStep('form'); }} className="w-full flex justify-start items-center gap-4 text-left p-6 rounded-3xl bg-ios-card shadow-lg border border-ios-separator active:scale-[0.98] transition-all">
           <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center text-orange-500 shrink-0"><span className="material-symbols-outlined !text-[36px] material-symbols-fill">sell</span></div>
           <div><h3 className="font-bold text-xl mb-1">闲置交易</h3><p className="text-sm text-ios-gray font-medium">转让闲置或寻找爱宠</p></div>
         </button>

@@ -49,6 +49,7 @@ const MOCK_USERS: UserProfile[] = [
 ];
 
 interface FeedScreenProps {
+  userProfile: UserProfile;
   posts: Post[];
   onConsultAI: () => void;
   onPostClick: (post: Post) => void;
@@ -58,7 +59,7 @@ interface FeedScreenProps {
   onAddToCart?: (product: Product) => void;
 }
 
-const FeedScreen: React.FC<FeedScreenProps> = ({ posts, onConsultAI, onPostClick, onToggleLike, onShare, onNotification, onAddToCart }) => {
+const FeedScreen: React.FC<FeedScreenProps> = ({ userProfile, posts, onConsultAI, onPostClick, onToggleLike, onShare, onNotification, onAddToCart }) => {
   const { user } = useAuthContext();
 
   // 顶层四大模块扁平化及顺序定义
@@ -155,27 +156,13 @@ const FeedScreen: React.FC<FeedScreenProps> = ({ posts, onConsultAI, onPostClick
   return (
     <div {...swipeHandlers} className="flex flex-col min-h-screen bg-ios-bg overflow-x-hidden">
       <header className="sticky top-0 z-50 ios-blur bg-ios-card/70 border-b border-ios-separator px-4 pt-12 pb-4">
-        <div className="flex bg-ios-bg/20 shadow-inner rounded-full p-1 mb-4">
-          <button onClick={() => setActiveMainTab('recommend')} className={`flex-1 py-1.5 text-sm font-bold rounded-full transition-all ${activeMainTab === 'recommend' ? 'bg-ios-card shadow-sm text-ios-text' : 'text-ios-gray'}`}>
-            推荐
-          </button>
-          <button onClick={() => setActiveMainTab('local')} className={`flex-1 py-1.5 text-sm font-bold rounded-full transition-all ${activeMainTab === 'local' ? 'bg-ios-card shadow-sm text-ios-text' : 'text-ios-gray'}`}>
-            同城
-          </button>
-          <button onClick={() => setActiveMainTab('mall')} className={`flex-1 py-1.5 text-sm font-bold rounded-full transition-all ${activeMainTab === 'mall' ? 'bg-ios-card shadow-sm text-ios-text' : 'text-ios-gray'}`}>
-            官方商城
-          </button>
-          <button onClick={() => setActiveMainTab('video')} className={`flex-1 py-1.5 text-sm font-bold rounded-full transition-all ${activeMainTab === 'video' ? 'bg-ios-card shadow-sm text-ios-text' : 'text-ios-gray'}`}>
-            短视频
-          </button>
-        </div>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="size-9 shrink-0 rounded-full border border-ios-separator overflow-hidden">
-              <img src="https://picsum.photos/seed/user/100/100" className="w-full h-full object-cover" />
+              <img src={userProfile?.avatar || "https://picsum.photos/seed/user/100/100"} className="w-full h-full object-cover" />
             </div>
             <div className="flex flex-col">
-              <h1 className="text-[17px] font-bold tracking-tight">{user?.email?.split('@')[0] || '访客'}</h1>
+              <h1 className="text-[17px] font-bold tracking-tight">{userProfile?.name || user?.email?.split('@')[0] || '访客'}</h1>
               <div className="flex items-center gap-1 text-[11px] text-ios-gray">
                 <span className="material-symbols-outlined !text-[12px] text-ios-blue material-symbols-fill">location_on</span>
                 <span>{myLocation}</span>
@@ -241,6 +228,21 @@ const FeedScreen: React.FC<FeedScreenProps> = ({ posts, onConsultAI, onPostClick
               <div className="absolute top-1.5 right-1.5 w-2 h-2 bg-ios-red rounded-full border border-ios-card"></div>
             </button>
           </div>
+        </div>
+
+        <div className="flex bg-ios-bg/20 shadow-inner rounded-full p-1 mb-1">
+          <button onClick={() => setActiveMainTab('recommend')} className={`flex-1 py-1.5 text-sm font-bold rounded-full transition-all ${activeMainTab === 'recommend' ? 'bg-ios-card shadow-sm text-ios-text' : 'text-ios-gray'}`}>
+            推荐
+          </button>
+          <button onClick={() => setActiveMainTab('local')} className={`flex-1 py-1.5 text-sm font-bold rounded-full transition-all ${activeMainTab === 'local' ? 'bg-ios-card shadow-sm text-ios-text' : 'text-ios-gray'}`}>
+            同城
+          </button>
+          <button onClick={() => setActiveMainTab('mall')} className={`flex-1 py-1.5 text-sm font-bold rounded-full transition-all ${activeMainTab === 'mall' ? 'bg-ios-card shadow-sm text-ios-text' : 'text-ios-gray'}`}>
+            官方商城
+          </button>
+          <button onClick={() => setActiveMainTab('video')} className={`flex-1 py-1.5 text-sm font-bold rounded-full transition-all ${activeMainTab === 'video' ? 'bg-ios-card shadow-sm text-ios-text' : 'text-ios-gray'}`}>
+            短视频
+          </button>
         </div>
       </header>
 

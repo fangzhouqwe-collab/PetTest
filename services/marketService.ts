@@ -94,6 +94,7 @@ export const getMarketItemById = async (itemId: string): Promise<MarketItem | nu
     const i = item as any;
     return {
         id: i.id,
+        userId: i.user_id,
         name: i.name,
         image: i.image_url || 'https://picsum.photos/seed/item/400/400',
         price: i.price,
