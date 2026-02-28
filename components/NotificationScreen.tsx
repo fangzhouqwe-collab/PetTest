@@ -28,7 +28,7 @@ const NotificationScreen: React.FC<NotificationScreenProps> = ({ onBack }) => {
 
     return (
         <div className="flex flex-col min-h-screen bg-ios-bg animate-in slide-in-from-right duration-300">
-            <header className="sticky top-0 z-50 ios-blur bg-white/80 border-b border-black/5 px-4 pt-10 pb-3 flex items-center justify-between">
+            <header className="sticky top-0 z-50 ios-blur bg-ios-card/80 border-b border-ios-separator px-4 pt-10 pb-3 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                     <button onClick={onBack} className="w-10 h-10 flex items-center justify-center rounded-full active:bg-black/5 transition-colors">
                         <span className="material-symbols-outlined text-[20px]">arrow_back_ios_new</span>
@@ -56,7 +56,7 @@ const NotificationScreen: React.FC<NotificationScreenProps> = ({ onBack }) => {
                         <div
                             key={note.id}
                             onClick={() => handleMarkAsRead(note.id)}
-                            className={`bg-white rounded-2xl p-4 flex gap-4 cursor-pointer active:bg-black/5 transition-colors ${!note.read ? 'border-l-4 border-l-ios-blue' : ''}`}
+                            className={`bg-ios-card rounded-2xl p-4 flex gap-4 cursor-pointer active:bg-ios-bg transition-colors border-b border-ios-separator ${!note.read ? 'border-l-4 border-l-ios-blue' : ''}`}
                         >
                             <div className="size-12 shrink-0 relative">
                                 {note.avatar ? (

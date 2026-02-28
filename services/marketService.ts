@@ -13,6 +13,7 @@ export interface MarketItem {
     gender?: string;
     location?: string;
     description?: string;
+    breed?: string;
     distance?: number;
     isMine?: boolean;
 }
@@ -67,6 +68,7 @@ export const getMarketItems = async (options?: {
         gender: item.gender || undefined,
         location: item.location || undefined,
         description: item.description || undefined,
+        breed: item.breed || undefined,
         distance: Math.random() * 10, // 模拟距离数据
         isMine: item.user_id === currentUserId
     }));
@@ -101,6 +103,7 @@ export const getMarketItemById = async (itemId: string): Promise<MarketItem | nu
         gender: i.gender || undefined,
         location: i.location || undefined,
         description: i.description || undefined,
+        breed: i.breed || undefined,
         distance: Math.random() * 10,
         isMine: i.user_id === currentUserId
     };
@@ -112,6 +115,7 @@ export const createMarketItem = async (data: {
     image_url?: string;
     price: number;
     category: string;
+    breed?: string;
     age?: string;
     gender?: string;
     location?: string;

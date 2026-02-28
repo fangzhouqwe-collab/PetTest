@@ -24,7 +24,7 @@ const UserSwitcher: React.FC<UserSwitcherProps> = ({ onUserChange }) => {
             {/* 切换按钮 */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center gap-2 bg-white rounded-full px-3 py-2 shadow-lg border border-black/10 hover:shadow-xl transition-all"
+                className="flex items-center gap-2 bg-ios-card shadow-lg border border-ios-separator hover:shadow-xl transition-all"
             >
                 <img
                     src={currentUser.avatar}
@@ -39,7 +39,7 @@ const UserSwitcher: React.FC<UserSwitcherProps> = ({ onUserChange }) => {
 
             {/* 用户列表 */}
             {isOpen && (
-                <div className="absolute top-full right-0 mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-black/10 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="absolute top-full right-0 mt-2 w-64 bg-ios-card rounded-2xl shadow-2xl border border-ios-separator overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                     <div className="px-4 py-3 bg-gray-50 border-b border-black/5">
                         <span className="text-xs font-bold text-ios-gray uppercase tracking-wider">切换测试账号</span>
                     </div>

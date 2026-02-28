@@ -17,14 +17,13 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }) => {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 h-24 ios-blur bg-white/80 border-t border-ios-separator/30 flex items-start justify-around px-4 pt-3 z-50 max-w-[540px] mx-auto">
+    <nav className="fixed bottom-0 left-0 right-0 h-24 bg-ios-card border-t border-ios-separator transition-colors duration-300 flex items-start justify-around px-4 pt-3 z-50 max-w-[540px] mx-auto">
       {tabs.map((tab) => (
         <button
           key={tab.id}
           onClick={() => onTabChange(tab.id)}
-          className={`flex flex-col items-center gap-1 w-16 transition-colors ${
-            activeTab === tab.id ? 'text-ios-blue' : 'text-ios-gray'
-          }`}
+          className={`flex flex-col items-center gap-1 w-16 transition-colors ${activeTab === tab.id ? 'text-ios-text' : 'text-ios-gray'
+            }`}
         >
           <span className={`material-symbols-outlined !text-[28px] ${activeTab === tab.id ? 'material-symbols-fill' : ''}`}>
             {tab.icon}

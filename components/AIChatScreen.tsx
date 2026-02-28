@@ -85,8 +85,8 @@ const AIChatScreen: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-white max-w-[480px] mx-auto overflow-hidden">
-      <header className="ios-header flex items-center h-[88px] pt-10 px-4 border-b border-black/5 bg-white/80 shrink-0">
+    <div className="flex flex-col h-screen bg-ios-bg max-w-[480px] mx-auto overflow-hidden">
+      <header className="ios-header flex items-center h-[88px] pt-10 px-4 border-b border-ios-separator bg-ios-card/80 shrink-0">
         <button onClick={onBack} className="flex items-center text-ios-blue w-20">
           <span className="material-symbols-outlined !text-[28px]">chevron_left</span>
           <span className="text-lg">返回</span>
@@ -116,7 +116,7 @@ const AIChatScreen: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto px-4 py-4 space-y-4 no-scrollbar bg-gradient-to-b from-ios-bg/30 to-white">
+      <main className="flex-1 overflow-y-auto px-4 py-4 space-y-4 no-scrollbar bg-gradient-to-b from-ios-bg/30 to-ios-bg">
         {messages.map(msg => (
           <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'} animate-in slide-in-from-bottom-2 duration-300`}>
             {msg.sender === 'ai' && (
@@ -132,8 +132,8 @@ const AIChatScreen: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               )}
               {msg.text && (
                 <div className={`rounded-2xl px-4 py-3 text-[15px] leading-relaxed shadow-sm ${msg.sender === 'user'
-                    ? 'bg-ios-blue text-white rounded-br-md'
-                    : 'bg-white text-black rounded-bl-md border border-black/5'
+                  ? 'bg-ios-blue text-white rounded-br-md'
+                  : 'bg-ios-card text-ios-text rounded-bl-none border border-ios-separator'
                   }`}>
                   {msg.text}
                 </div>
@@ -184,7 +184,7 @@ const AIChatScreen: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         </div>
       )}
 
-      <div className="p-4 bg-white border-t border-black/5 pb-8">
+      <div className="p-4 bg-ios-card border-t border-ios-separator pb-8">
         <div className="flex items-center gap-2 bg-ios-bg rounded-full p-1.5 shadow-inner">
           <button onClick={() => fileInputRef.current?.click()} className="w-9 h-9 flex items-center justify-center text-ios-blue rounded-full hover:bg-white/50 transition-colors">
             <span className="material-symbols-outlined !text-[22px]">add_photo_alternate</span>
@@ -209,8 +209,8 @@ const AIChatScreen: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             onClick={handleSendMessage}
             disabled={isTyping || (!inputValue.trim() && !selectedImage)}
             className={`w-9 h-9 rounded-full flex items-center justify-center text-white transition-all ${inputValue.trim() || selectedImage
-                ? 'bg-ios-blue active:scale-95'
-                : 'bg-ios-gray/30'
+              ? 'bg-ios-blue active:scale-95'
+              : 'bg-ios-gray/30'
               }`}
           >
             <span className="material-symbols-outlined !text-[18px]">arrow_upward</span>

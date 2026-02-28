@@ -30,3 +30,11 @@ ALTER TABLE public.pets ADD COLUMN IF NOT EXISTS birthday DATE;
 ALTER TABLE public.pets ADD COLUMN IF NOT EXISTS weight VARCHAR(50);
 ALTER TABLE public.pets ADD COLUMN IF NOT EXISTS vaccine_status BOOLEAN DEFAULT FALSE;
 ALTER TABLE public.pets ADD COLUMN IF NOT EXISTS dewormed BOOLEAN DEFAULT FALSE;
+
+-- 添加 breed 字段到 market_items 表支持品种筛选
+ALTER TABLE public.market_items ADD COLUMN IF NOT EXISTS breed TEXT;
+
+-- 修复数值溢出错误：扩大价格字段的精度
+ALTER TABLE public.market_items ALTER COLUMN price TYPE NUMERIC(20, 2);
+ALTER TABLE public.products ALTER COLUMN price TYPE NUMERIC(20, 2);
+ALTER TABLE public.orders ALTER COLUMN total_amount TYPE NUMERIC(20, 2);

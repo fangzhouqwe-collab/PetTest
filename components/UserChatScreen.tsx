@@ -157,8 +157,8 @@ const UserChatScreen: React.FC<UserChatScreenProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-screen bg-[#F2F2F7] animate-in slide-in-from-right duration-300 overflow-hidden max-w-[540px] mx-auto shadow-2xl relative">
-      <header className="fixed top-0 w-full max-w-[540px] z-50 ios-blur bg-white/80 h-[96px] pt-12 px-6 flex items-center border-b border-black/5">
+    <div className="flex flex-col h-screen bg-ios-bg transition-colors duration-300 animate-in slide-in-from-right duration-300 overflow-hidden max-w-[540px] mx-auto shadow-2xl relative">
+      <header className="fixed top-0 w-full max-w-[540px] z-50 ios-blur bg-ios-card/80 h-[96px] pt-12 px-6 flex items-center border-b border-ios-separator">
         <button onClick={onBack} className="text-ios-blue flex items-center active:opacity-60 transition-opacity">
           <span className="material-symbols-outlined !text-[34px]">chevron_left</span>
           <span className="text-[18px] font-medium ml-[-4px]">消息</span>
@@ -172,19 +172,19 @@ const UserChatScreen: React.FC<UserChatScreenProps> = ({
         </div>
         {targetAvatar && (
           <div className="absolute right-6 top-[54px]">
-            <img src={targetAvatar} className="size-9 rounded-full object-cover border border-black/5 shadow-sm" />
+            <img src={targetAvatar} className="size-9 rounded-full object-cover border border-ios-separator shadow-sm" />
           </div>
         )}
       </header>
 
-      <main className="flex-1 pt-[96px] pb-[100px] overflow-y-auto px-6 space-y-5 pt-8 no-scrollbar bg-[#F2F2F7]">
+      <main className="flex-1 pt-[96px] pb-[100px] overflow-y-auto px-6 space-y-5 pt-8 no-scrollbar bg-ios-bg transition-colors duration-300">
         {isLoading ? (
           <div className="flex-1 flex items-center justify-center text-ios-gray h-full">
             <span className="animate-pulse">加载消息中...</span>
           </div>
         ) : chatMessages.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center text-ios-gray h-full opacity-60 italic text-sm py-20">
-            <div className="w-16 h-16 bg-black/5 rounded-full flex items-center justify-center mb-4">
+            <div className="w-16 h-16 bg-ios-bg shadow-inner rounded-full flex items-center justify-center mb-4">
               <span className="material-symbols-outlined !text-[32px] text-ios-gray">chat_bubble_outline</span>
             </div>
             <p>还没有任何消息</p>
@@ -193,8 +193,8 @@ const UserChatScreen: React.FC<UserChatScreenProps> = ({
         ) : (
           chatMessages.map(m => (
             <div key={m.id} className={`flex flex-col ${m.sender === 'user' ? 'items-end' : 'items-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
-              <div className={`max-w-[85%] rounded-[22px] px-5 py-3 text-[17px] shadow-sm leading-relaxed relative ${m.sender === 'user' ? 'bg-ios-blue text-white rounded-tr-none' : 'bg-white text-black rounded-tl-none border border-black/5'
-                }`}>
+              <div className={`max-w-[85%] rounded-[22px] px-5 py-3 text-[17px] shadow-sm leading-relaxed relative ${m.sender === 'user' ? 'bg-ios-blue text-white rounded-tr-none' : 'bg-ios-card text-ios-text rounded-tl-none border border-ios-separator'
+                } transition-colors duration-300`}>
                 {m.video && <video src={m.video} className="rounded-xl mb-2 w-full shadow-inner" controls />}
                 {m.image && <img src={m.image} className="rounded-xl mb-2 w-full shadow-inner" />}
                 {m.text && m.text !== '[图片]' && m.text !== '[视频]' && m.text}
@@ -213,7 +213,7 @@ const UserChatScreen: React.FC<UserChatScreenProps> = ({
         <div ref={endRef} />
       </main>
 
-      <div className="fixed bottom-0 w-full max-w-[540px] bg-white border-t border-black/5 px-4 py-4 flex items-center gap-4 shadow-[0_-2px_15px_rgba(0,0,0,0.03)] min-h-[76px] pb-10">
+      <div className="fixed bottom-0 w-full max-w-[540px] bg-ios-card border-t border-ios-separator transition-all duration-300 shadow-none">
         <label className="text-ios-blue active:scale-90 transition-transform shrink-0 cursor-pointer">
           <span className="material-symbols-outlined !text-[28px] text-ios-blue/90">image</span>
           <input type="file" className="hidden" accept="image/*" onChange={sendImage} />
@@ -223,7 +223,7 @@ const UserChatScreen: React.FC<UserChatScreenProps> = ({
           <input type="file" className="hidden" accept="video/mp4,video/webm,video/mov" onChange={sendVideo} />
         </label>
 
-        <div className="flex-1 bg-black/5 rounded-[24px] px-5 py-2.5 flex items-center transition-all focus-within:bg-black/10 focus-within:ring-1 focus-within:ring-ios-blue/10">
+        <div className="flex-1 bg-ios-bg shadow-inner rounded-[24px] px-5 py-2.5 flex items-center transition-all focus-within:bg-black/10 focus-within:ring-1 focus-within:ring-ios-blue/10">
           <input
             className="w-full bg-transparent border-none focus:ring-0 text-[17px] p-0 min-h-[40px]"
             placeholder="回复消息..."

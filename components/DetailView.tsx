@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Post, MarketItem } from '../types';
+import { Post, MarketItem, Product } from '../types';
 
 interface DetailViewProps {
   type: 'post' | 'market';
@@ -10,9 +10,10 @@ interface DetailViewProps {
   onAddComment?: (postId: string, text: string) => void;
   onToggleLike?: (postId: string) => void;
   onShare?: (title: string) => void;
+  onAddToCart?: (product: Product) => void;
 }
 
-const DetailView: React.FC<DetailViewProps> = ({ type, data, onBack, onChat, onAddComment, onToggleLike, onShare }) => {
+const DetailView: React.FC<DetailViewProps> = ({ type, data, onBack, onChat, onAddComment, onToggleLike, onShare, onAddToCart }) => {
   const [commentInput, setCommentInput] = useState('');
   if (!data) return null;
 
@@ -24,8 +25,8 @@ const DetailView: React.FC<DetailViewProps> = ({ type, data, onBack, onChat, onA
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-white animate-in slide-in-from-right duration-300">
-      <header className="fixed top-0 left-0 right-0 z-50 ios-blur bg-white/70 h-[88px] pt-10 px-4 flex items-center justify-between border-b border-black/5">
+    <div className="flex flex-col min-h-screen bg-ios-bg animate-in slide-in-from-right duration-300">
+      <header className="fixed top-0 left-0 right-0 z-50 ios-blur bg-ios-card/70 h-[88px] pt-10 px-4 flex items-center justify-between border-b border-ios-separator">
         <button onClick={onBack} className="text-ios-blue flex items-center">
           <span className="material-symbols-outlined !text-[32px]">chevron_left</span>
           <span className="text-[17px]">返回</span>
@@ -54,7 +55,7 @@ const DetailView: React.FC<DetailViewProps> = ({ type, data, onBack, onChat, onA
             {/* 分页指示器 */}
             <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
               {data.images.map((_: string, idx: number) => (
-                <div key={idx} className="w-2 h-2 rounded-full bg-white/60 shadow-sm" />
+                <div key={idx} className="w-2 h-2 rounded-full bg-ios-gray/40 shadow-sm" />
               ))}
             </div>
             <div className="absolute bottom-3 right-3 bg-black/50 text-white text-[11px] px-2.5 py-1 rounded-full font-medium">
@@ -87,7 +88,7 @@ const DetailView: React.FC<DetailViewProps> = ({ type, data, onBack, onChat, onA
                 )}
               </div>
               <h1 className="text-[22px] font-bold mb-3">{data.title}</h1>
-              <p className="text-[17px] leading-relaxed text-[#1C1C1E]">{data.content}</p>
+              <p className="text-[17px] leading-relaxed text-ios-text">{data.content}</p>
               {data.location && (
                 <div className="flex items-center gap-1 mt-4 text-[12px] text-ios-blue bg-ios-blue/5 w-fit px-3 py-1 rounded-full">
                   <span className="material-symbols-outlined !text-[14px] material-symbols-fill">location_on</span>
@@ -107,7 +108,7 @@ const DetailView: React.FC<DetailViewProps> = ({ type, data, onBack, onChat, onA
                         <span className="font-bold text-sm">{c.author}</span>
                         <span className="text-[11px] text-ios-gray">{c.time}</span>
                       </div>
-                      <p className="text-[15px] text-black/80">{c.text}</p>
+                      <p className="text-[15px] text-ios-text/80">{c.text}</p>
                     </div>
                   </div>
                 )) : (
@@ -152,7 +153,7 @@ const DetailView: React.FC<DetailViewProps> = ({ type, data, onBack, onChat, onA
         )}
       </div>
 
-      <footer className="fixed bottom-0 left-0 right-0 h-28 ios-blur bg-white/80 border-t border-black/5 px-4 flex flex-col pt-3 pb-8 z-50 max-w-[540px] mx-auto">
+      <footer className="fixed bottom-0 left-0 right-0 h-28 ios-blur bg-ios-card/80 border-t border-ios-separator px-4 flex flex-col pt-3 pb-8 z-50 max-w-[540px] mx-auto">
         {type === 'post' ? (
           <div className="flex items-center gap-4">
             <div className="flex-1 bg-ios-bg rounded-full px-4 py-2 flex items-center">
@@ -171,18 +172,22 @@ const DetailView: React.FC<DetailViewProps> = ({ type, data, onBack, onChat, onA
             <button onClick={handleComment} className={`text-ios-blue font-bold text-sm ${!commentInput.trim() && 'opacity-30'}`}>发送</button>
           </div>
         ) : (
-          <div className="flex items-center gap-3 w-full">
-            <button className="flex flex-col items-center text-ios-gray px-2">
-              <span className="material-symbols-outlined">star</span>
-              <span className="text-[10px]">收藏</span>
+          <div className="flex items-center gap-2 w-full">
+            <button className="flex flex-col items-center justify-center text-ios-gray px-1 active:opacity-60 transition-opacity whitespace-nowrap min-w-[36px]">
+              <span className="material-symbols-outlined !text-[20px]">star</span>
+              <span className="text-[10px] mt-0.5">收藏</span>
+            </button>
+            <button onClick={() => onAddToCart?.(data)} className="flex flex-col items-center justify-center text-ios-gray px-1 active:opacity-60 transition-opacity whitespace-nowrap min-w-[36px]">
+              <span className="material-symbols-outlined !text-[20px]">add_shopping_cart</span>
+              <span className="text-[10px] mt-0.5">加购</span>
             </button>
             <button
               onClick={() => onChat?.("卖家", "https://picsum.photos/seed/seller/100/100")}
-              className="flex-1 bg-ios-bg text-ios-blue font-bold py-3 rounded-xl active:opacity-70"
+              className="flex-1 bg-ios-bg text-ios-blue font-bold py-3 rounded-xl active:opacity-70 mx-1 shadow-sm whitespace-nowrap"
             >
               聊一聊
             </button>
-            <button className="flex-1 bg-ios-blue text-white font-bold py-3 rounded-xl active:opacity-70">
+            <button onClick={() => onAddToCart?.(data)} className="flex-1 bg-gradient-to-r from-ios-blue to-blue-600 text-white font-bold py-3 rounded-xl active:opacity-70 shadow-md whitespace-nowrap">
               立即购买
             </button>
           </div>

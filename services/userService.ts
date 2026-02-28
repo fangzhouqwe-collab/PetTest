@@ -30,6 +30,7 @@ export const getCurrentUserProfile = async (): Promise<UserProfile | null> => {
         avatar: p.avatar_url || 'https://picsum.photos/seed/user/200/200',
         bgImage: p.bg_image_url || 'https://picsum.photos/seed/bg/800/400',
         pets: (p.pets || []).map((pet: any) => ({
+            id: pet.id,
             name: pet.name,
             breed: pet.breed,
             img: pet.image_url || 'https://picsum.photos/seed/pet/300/300',
@@ -67,6 +68,7 @@ export const getUserProfileById = async (userId: string): Promise<UserProfile | 
         avatar: p.avatar_url || 'https://picsum.photos/seed/user/200/200',
         bgImage: p.bg_image_url || 'https://picsum.photos/seed/bg/800/400',
         pets: (p.pets || []).map((pet: any) => ({
+            id: pet.id,
             name: pet.name,
             breed: pet.breed,
             img: pet.image_url || 'https://picsum.photos/seed/pet/300/300',

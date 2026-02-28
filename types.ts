@@ -9,7 +9,11 @@ export enum AppTab {
   POST_DETAIL = 'post_detail',
   MARKET_DETAIL = 'market_detail',
   USER_CHAT = 'user_chat',
-  NOTIFICATIONS = 'notifications'
+  NOTIFICATIONS = 'notifications',
+  CART = 'cart',
+  ORDERS = 'orders',
+  ADDRESS = 'address',
+  HISTORY = 'history'
 }
 
 export interface Comment {
@@ -45,7 +49,7 @@ export interface MarketItem {
   image: string;
   price: number;
   name: string;
-  category: '狗狗' | '猫咪' | '鸟类' | '爬宠' | '其他';
+  category: '狗狗' | '猫咪' | '鸟类' | '爬宠' | '水族' | '仓鼠' | '兔子' | '豚鼠' | '龙猫' | '蜘蛛' | '蝎子' | '昆虫' | '马' | '猪' | '牛' | '羊' | '其他';
   verified: boolean;
   age: string;
   gender: '公' | '母' | '亚成体';
@@ -54,6 +58,7 @@ export interface MarketItem {
   description?: string;
   vaccines?: boolean;
   dewormed?: boolean;
+  breed?: string;
   isMine?: boolean;
 }
 
@@ -79,6 +84,7 @@ export interface ChatMessage {
 }
 
 export interface Pet {
+  id?: string;
   name: string;
   breed: string;
   img: string;
@@ -91,9 +97,51 @@ export interface Pet {
 
 export interface UserProfile {
   userId?: string;
+  petConnectId?: string; // 唯一ID e.g. "pet_10086"
   name: string;
   bio: string;
   avatar: string;
   bgImage: string;
   pets: Pet[];
+  following?: number;
+  followers?: number;
+  likesReceived?: number;
+  isFollowing?: boolean;
+}
+
+// === 电商与交易扩展类型 ===
+export interface Product {
+  id: string;
+  name: string;
+  price: number;
+  originalPrice?: number;
+  image: string;
+  sales?: string;
+  tag?: string;
+}
+
+export interface CartItem {
+  id: string; // 购物车条目ID
+  productId: string;
+  product: Product;
+  quantity: number;
+  selected: boolean;
+}
+
+export interface Address {
+  id: string;
+  receiver: string;
+  phone: string;
+  region: string; // e.g. "浙江省 杭州市 西湖区"
+  detail: string; // e.g. "某某街道某某小区1-1-1"
+  isDefault: boolean;
+}
+
+export interface Order {
+  id: string;
+  items: CartItem[]; // 购买的商品
+  totalAmount: number;
+  status: 'pending' | 'shipped' | 'completed' | 'cancelled';
+  createdAt: string;
+  address: Address;
 }

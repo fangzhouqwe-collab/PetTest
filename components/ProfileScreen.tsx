@@ -1,7 +1,8 @@
 
 import React, { useState, useRef } from 'react';
-import { UserProfile, Post, Pet } from '../types';
+import { UserProfile, Post, Pet, AppTab, MarketItem } from '../types';
 import { useAuthContext } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface ProfileScreenProps {
   user: UserProfile;
@@ -9,10 +10,16 @@ interface ProfileScreenProps {
   onUpdateProfile: (u: UserProfile) => void;
   onAddPet: (pet: Pet) => void;
   onLogout?: () => void;
+  onPostClick?: (post: Post) => void;
+  onItemClick?: (item: MarketItem) => void;
+  onDeletePet?: (petId: string) => void;
+  onNavigate?: (tab: AppTab) => void;
+  marketItems: MarketItem[];
 }
 
-const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, posts, onUpdateProfile, onAddPet, onLogout }) => {
+const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, posts, marketItems, onUpdateProfile, onAddPet, onLogout, onPostClick, onItemClick, onDeletePet, onNavigate }) => {
   const { user: authUser, signOut } = useAuthContext();
+  const { theme, toggleTheme } = useTheme();
   const [isEditing, setIsEditing] = useState(false);
   const [showAddPet, setShowAddPet] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -26,6 +33,11 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, posts, onUpdateProf
   const [newPetWeight, setNewPetWeight] = useState('');
   const [newPetVaccine, setNewPetVaccine] = useState(false);
   const [newPetDewormed, setNewPetDewormed] = useState(false);
+  const [showUserList, setShowUserList] = useState(false);
+  const [userListType, setUserListType] = useState<'friends' | 'fans' | 'following'>('friends');
+  const [selectedPet, setSelectedPet] = useState<Pet | null>(null);
+  const [showPetDetail, setShowPetDetail] = useState(false);
+  const [activeTab, setActiveTab] = useState<'posts' | 'items'>('posts');
 
   const bgInputRef = useRef<HTMLInputElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -93,8 +105,8 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, posts, onUpdateProf
   // 编辑页面
   if (isEditing) {
     return (
-      <div className="flex flex-col min-h-screen bg-white animate-in slide-in-from-bottom duration-300">
-        <header className="h-[88px] pt-10 px-4 border-b border-black/5 flex items-center justify-between sticky top-0 bg-white z-50">
+      <div className="flex flex-col min-h-screen bg-ios-card animate-in slide-in-from-bottom duration-300">
+        <header className="h-[88px] pt-10 px-4 border-b border-ios-separator flex items-center justify-between sticky top-0 bg-ios-card z-50">
           <button onClick={() => setIsEditing(false)} className="text-ios-blue text-[17px]">取消</button>
           <span className="font-bold">编辑个人资料</span>
           <button onClick={save} className="text-ios-blue font-bold text-[17px]">保存</button>
@@ -150,10 +162,15 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, posts, onUpdateProf
 
   return (
     <div className="flex flex-col min-h-screen bg-ios-bg relative">
-      <header className="sticky top-0 z-[100] ios-blur bg-white/60 border-b border-black/10 px-4 h-11 flex items-center justify-between">
-        <button onClick={() => setShowSettings(true)} className="text-ios-blue">
-          <span className="material-symbols-outlined text-[24px]">settings</span>
-        </button>
+      <header className="sticky top-0 z-[100] ios-blur bg-ios-card/60 border-b border-ios-separator px-4 h-11 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <button onClick={() => setShowSettings(true)} className="text-ios-blue">
+            <span className="material-symbols-outlined text-[24px]">settings</span>
+          </button>
+          <button onClick={toggleTheme} className="text-ios-blue active:scale-90 transition-transform">
+            <span className="material-symbols-outlined text-[22px]">{theme === 'dark' ? 'light_mode' : 'dark_mode'}</span>
+          </button>
+        </div>
         <h1 className="text-[17px] font-semibold tracking-tight">个人中心</h1>
         <button onClick={handleShare} className="text-ios-blue">
           <span className="material-symbols-outlined text-[24px]">share</span>
@@ -161,36 +178,40 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, posts, onUpdateProf
       </header>
 
       {/* User Info & Stats */}
-      <section className="relative bg-white shadow-sm">
+      <section className="relative bg-ios-card shadow-none">
         <div className="h-56 w-full bg-cover bg-center transition-all duration-700" style={{ backgroundImage: `url(${user.bgImage})` }}>
           <div className="w-full h-full bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
         </div>
         <div className="px-6 pb-6 -mt-12 relative z-10">
           <div className="flex items-end gap-5 mb-4">
-            <div className="w-28 h-28 rounded-2xl border-4 border-white shadow-2xl overflow-hidden bg-white shrink-0">
+            <div className="w-28 h-28 rounded-2xl border-4 border-ios-card shadow-2xl overflow-hidden bg-ios-card shrink-0">
               <img src={user.avatar} className="w-full h-full object-cover" />
             </div>
             <div className="flex-1 pb-1">
-              <h2 className="text-2xl font-bold tracking-tight mb-0.5 text-black drop-shadow-md">{user.name}</h2>
-              <p className="text-[12px] text-black/60 drop-shadow-sm font-medium">ID: {authUser?.id?.slice(0, 8) || '10294857'}</p>
+              <h2 className="text-2xl font-bold tracking-tight mb-0.5 text-ios-text drop-shadow-md">{user.name}</h2>
+              <p className="text-[12px] text-ios-text/60 drop-shadow-sm font-medium">ID: {authUser?.id?.slice(0, 8) || '10294857'}</p>
             </div>
           </div>
 
-          <p className="text-[16px] text-black/80 leading-relaxed mb-6 font-medium pr-4">{user.bio}</p>
+          <p className="text-[16px] text-ios-text/80 leading-relaxed mb-6 font-medium pr-4">{user.bio}</p>
 
           {/* 社交数据 - 新增 */}
-          <div className="flex items-center gap-12 px-1 mb-6">
-            <div className="flex flex-col cursor-pointer active:scale-95 transition-transform">
-              <span className="text-[19px] font-bold tracking-tight">1,240</span>
+          <div className="grid grid-cols-4 gap-4 px-1 mb-6">
+            <div className="flex flex-col items-center cursor-pointer active:scale-95 transition-transform" onClick={() => alert('获赞详情正在开发中')}>
+              <span className="text-[19px] font-bold tracking-tight">{user.likesReceived?.toLocaleString() || '0'}</span>
+              <span className="text-[11px] text-ios-gray font-bold uppercase tracking-wider">获赞</span>
+            </div>
+            <div className="flex flex-col items-center cursor-pointer active:scale-95 transition-transform" onClick={() => { setUserListType('friends'); setShowUserList(true); }}>
+              <span className="text-[19px] font-bold tracking-tight">186</span>
+              <span className="text-[11px] text-ios-gray font-bold uppercase tracking-wider">朋友</span>
+            </div>
+            <div className="flex flex-col items-center cursor-pointer active:scale-95 transition-transform" onClick={() => { setUserListType('fans'); setShowUserList(true); }}>
+              <span className="text-[19px] font-bold tracking-tight">{user.followers?.toLocaleString() || '1,240'}</span>
               <span className="text-[11px] text-ios-gray font-bold uppercase tracking-wider">粉丝</span>
             </div>
-            <div className="flex flex-col cursor-pointer active:scale-95 transition-transform">
-              <span className="text-[19px] font-bold tracking-tight">450</span>
+            <div className="flex flex-col items-center cursor-pointer active:scale-95 transition-transform" onClick={() => { setUserListType('following'); setShowUserList(true); }}>
+              <span className="text-[19px] font-bold tracking-tight">{user.following?.toLocaleString() || '450'}</span>
               <span className="text-[11px] text-ios-gray font-bold uppercase tracking-wider">关注</span>
-            </div>
-            <div className="flex flex-col cursor-pointer active:scale-95 transition-transform">
-              <span className="text-[19px] font-bold tracking-tight">{myPosts.length}</span>
-              <span className="text-[11px] text-ios-gray font-bold uppercase tracking-wider">动态</span>
             </div>
           </div>
 
@@ -205,24 +226,24 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, posts, onUpdateProf
 
       {/* 功能快捷入口 - 新增 */}
       <section className="px-4 mt-4">
-        <div className="bg-white rounded-3xl p-4 grid grid-cols-4 gap-2 shadow-sm">
+        <div className="bg-ios-card rounded-3xl p-4 grid grid-cols-4 gap-2 shadow-sm border border-ios-separator transition-colors duration-300">
           {[
-            { label: '我的订单', icon: 'shopping_bag', color: 'text-orange-500', bg: 'bg-orange-50' },
-            { label: '浏览历史', icon: 'history', color: 'text-blue-500', bg: 'bg-blue-50' },
-            { label: '钱包卡券', icon: 'account_balance_wallet', color: 'text-green-500', bg: 'bg-green-50' },
-            { label: '地址管理', icon: 'location_on', color: 'text-purple-500', bg: 'bg-purple-50' },
+            { label: '订单管理', icon: 'receipt_long', color: 'text-orange-500', bg: 'bg-orange-50', tab: AppTab.ORDERS },
+            { label: '购物车', icon: 'shopping_cart', color: 'text-green-500', bg: 'bg-green-50', tab: AppTab.CART },
+            { label: '足迹/历史', icon: 'history', color: 'text-blue-500', bg: 'bg-blue-50' }, // 后续接入浏览历史页
+            { label: '地址管理', icon: 'location_on', color: 'text-purple-500', bg: 'bg-purple-50', tab: AppTab.ADDRESS },
           ].map((item, i) => (
-            <button key={i} className="flex flex-col items-center gap-2 py-2 active:scale-95 transition-transform">
+            <button key={i} onClick={() => item.tab ? onNavigate?.(item.tab) : alert('功能接入中')} className="flex flex-col items-center gap-2 py-2 active:scale-95 transition-transform">
               <div className={`size-11 rounded-2xl ${item.bg} flex items-center justify-center`}>
                 <span className={`material-symbols-outlined ${item.color} !text-[22px]`}>{item.icon}</span>
               </div>
-              <span className="text-[11px] font-medium text-[#1C1C1E]">{item.label}</span>
+              <span className="text-[11px] font-medium text-ios-text">{item.label}</span>
             </button>
           ))}
         </div>
       </section>
 
-      <section className="mt-4 px-6 bg-white py-6 rounded-3xl shadow-sm mx-4 mb-4">
+      <section className="mt-4 px-6 bg-ios-card py-6 rounded-3xl shadow-sm mx-4 mb-4 border border-ios-separator transition-colors duration-300">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-[18px] font-bold tracking-tight">我的宠宝</h3>
           <button
@@ -235,32 +256,32 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, posts, onUpdateProf
         </div>
         <div className="flex overflow-x-auto no-scrollbar gap-4 pb-2">
           {user.pets.map((pet, i) => (
-            <div key={i} className="shrink-0 w-36 overflow-hidden rounded-[20px] bg-ios-bg border border-black/5 relative shadow-sm group active:scale-95 transition-all">
-              <div className="aspect-square w-full relative">
-                <img src={pet.img} className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-2.5">
-                  <div className="flex items-center justify-between mb-0.5 mt-auto">
-                    <h4 className="font-bold text-white text-[14px] truncate flex-1 leading-tight drop-shadow-md">{pet.name}</h4>
-                    {pet.gender && pet.gender !== '未知' && (
-                      <span className={`text-[12px] font-bold ${pet.gender === '公' ? 'text-blue-400' : 'text-pink-400'} drop-shadow-md`}>
-                        {pet.gender === '公' ? '♂' : '♀'}
-                      </span>
-                    )}
+            <div
+              key={i}
+              onClick={() => { setSelectedPet(pet); setShowPetDetail(true); }}
+              className="bg-ios-card rounded-[24px] bg-ios-card border border-ios-separator shadow-none active:scale-95 transition-all group flex flex-col"
+            >
+              <div className="aspect-square w-full relative overflow-hidden">
+                <img src={pet.img} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                {pet.gender && pet.gender !== '未知' && (
+                  <div className={`absolute top-2 right-2 size-6 rounded-full ios-blur ${pet.gender === '公' ? 'bg-ios-blue/20 text-ios-blue' : 'bg-ios-red/20 text-ios-red'} flex items-center justify-center border border-white/40`}>
+                    <span className="text-[12px] font-bold">{pet.gender === '公' ? '♂' : '♀'}</span>
                   </div>
-                  <p className="text-[11px] text-white/90 font-medium truncate w-full flex items-center gap-1">
-                    {pet.breed} {pet.weight ? <span className="text-[10px] opacity-80">• {pet.weight}</span> : ''}
-                  </p>
-                </div>
+                )}
               </div>
 
-              {/* 下半部分：徽章信息 */}
-              {(pet.vaccineStatus || pet.dewormed || pet.birthday) && (
-                <div className="px-2 py-2 flex flex-wrap gap-1 bg-white">
-                  {pet.birthday && <span className="text-[10px] bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded border border-purple-100">{pet.birthday}</span>}
-                  {pet.vaccineStatus && <span className="text-[10px] bg-green-50 text-green-600 px-1.5 py-0.5 rounded border border-green-100">已免</span>}
-                  {pet.dewormed && <span className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded border border-blue-100">已驱虫</span>}
-                </div>
-              )}
+              {/* 名字放下面 */}
+              <div className="p-3 bg-ios-card">
+                <h4 className="font-bold text-[15px] truncate text-ios-text mb-0.5">{pet.name}</h4>
+                <p className="text-[11px] text-ios-gray font-medium truncate">{pet.breed}</p>
+                {/* 迷你小徽标 */}
+                {(pet.vaccineStatus || pet.dewormed) && (
+                  <div className="flex gap-1 mt-1.5 overflow-hidden">
+                    {pet.vaccineStatus && <span className="text-[8px] bg-green-50 text-green-600 px-1 rounded border border-green-100 shrink-0">已免</span>}
+                    {pet.dewormed && <span className="text-[8px] bg-blue-50 text-blue-600 px-1 rounded border border-blue-100 shrink-0">已驱</span>}
+                  </div>
+                )}
+              </div>
             </div>
           ))}
           {user.pets.length === 0 && (
@@ -273,9 +294,9 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, posts, onUpdateProf
 
       {/* 设置面板 */}
       {showSettings && (
-        <div className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm flex items-end animate-in fade-in duration-300" onClick={() => setShowSettings(false)}>
-          <div className="w-full bg-white rounded-t-[32px] p-6 shadow-2xl animate-in slide-in-from-bottom duration-300 max-w-[540px] mx-auto" onClick={e => e.stopPropagation()}>
-            <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6"></div>
+        <div className="fixed inset-0 z-[200] bg-ios-bg/200 backdrop-blur-sm flex items-end animate-in fade-in duration-300" onClick={() => setShowSettings(false)}>
+          <div className="w-full bg-ios-card rounded-t-[32px] p-6 shadow-2xl border-t border-ios-separator transition-all duration-300 max-w-[540px] mx-auto" onClick={e => e.stopPropagation()}>
+            <div className="w-12 h-1.5 bg-ios-separator/50 rounded-full mx-auto mb-6"></div>
             <h3 className="text-2xl font-bold mb-6 text-center">设置</h3>
 
             <div className="space-y-3">
@@ -293,17 +314,22 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, posts, onUpdateProf
 
               {/* 设置选项 */}
               <div className="bg-ios-bg rounded-2xl overflow-hidden">
-                <button className="w-full px-4 py-4 flex items-center gap-3 active:bg-black/5 transition-colors border-b border-black/5">
+                <button className="w-full px-4 py-4 flex items-center gap-3 active:bg-ios-bg/20 transition-colors border-b border-ios-separator">
+                  <span className="material-symbols-outlined text-ios-blue">account_balance_wallet</span>
+                  <span className="flex-1 text-left text-[15px]">购物与支付设置</span>
+                  <span className="material-symbols-outlined text-ios-gray">chevron_right</span>
+                </button>
+                <button className="w-full px-4 py-4 flex items-center gap-3 active:bg-ios-bg/20 transition-colors border-b border-ios-separator">
                   <span className="material-symbols-outlined text-ios-blue">notifications</span>
                   <span className="flex-1 text-left text-[15px]">通知设置</span>
                   <span className="material-symbols-outlined text-ios-gray">chevron_right</span>
                 </button>
-                <button className="w-full px-4 py-4 flex items-center gap-3 active:bg-black/5 transition-colors border-b border-black/5">
+                <button className="w-full px-4 py-4 flex items-center gap-3 active:bg-ios-bg/20 transition-colors border-b border-ios-separator">
                   <span className="material-symbols-outlined text-ios-blue">security</span>
                   <span className="flex-1 text-left text-[15px]">隐私设置</span>
                   <span className="material-symbols-outlined text-ios-gray">chevron_right</span>
                 </button>
-                <button className="w-full px-4 py-4 flex items-center gap-3 active:bg-black/5 transition-colors">
+                <button className="w-full px-4 py-4 flex items-center gap-3 active:bg-ios-bg/20 transition-colors">
                   <span className="material-symbols-outlined text-ios-blue">help</span>
                   <span className="flex-1 text-left text-[15px]">帮助与反馈</span>
                   <span className="material-symbols-outlined text-ios-gray">chevron_right</span>
@@ -331,8 +357,8 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, posts, onUpdateProf
 
       {/* 分享面板 */}
       {showShareModal && (
-        <div className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm flex items-end animate-in fade-in duration-300" onClick={() => setShowShareModal(false)}>
-          <div className="w-full bg-white rounded-t-[32px] p-6 shadow-2xl animate-in slide-in-from-bottom duration-300 max-w-[540px] mx-auto" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[200] bg-ios-bg/200 backdrop-blur-sm flex items-end animate-in fade-in duration-300" onClick={() => setShowShareModal(false)}>
+          <div className="w-full bg-ios-card rounded-t-[32px] p-6 shadow-2xl border-t border-ios-separator transition-all duration-300 max-w-[540px] mx-auto" onClick={e => e.stopPropagation()}>
             <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6"></div>
             <h3 className="text-2xl font-bold mb-6 text-center">分享个人主页</h3>
 
@@ -341,7 +367,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, posts, onUpdateProf
               <div className="flex items-center gap-3">
                 <img src={user.avatar} className="w-16 h-16 rounded-2xl object-cover" />
                 <div className="flex-1">
-                  <p className="font-bold text-[17px] text-black">{user.name}</p>
+                  <p className="font-bold text-[17px] text-ios-text">{user.name}</p>
                   <p className="text-[13px] text-ios-gray line-clamp-2">{user.bio}</p>
                 </div>
               </div>
@@ -370,7 +396,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, posts, onUpdateProf
 
             <button
               onClick={() => setShowShareModal(false)}
-              className="w-full bg-ios-bg text-black font-medium py-4 rounded-2xl text-[15px]"
+              className="w-full bg-ios-bg text-ios-text font-medium py-4 rounded-2xl text-[15px]"
             >
               取消
             </button>
@@ -379,8 +405,8 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, posts, onUpdateProf
       )}
 
       {showAddPet && (
-        <div className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm flex items-end animate-in fade-in duration-300" onClick={() => setShowAddPet(false)}>
-          <div className="w-full bg-white rounded-t-[32px] p-6 shadow-2xl animate-in slide-in-from-bottom duration-300 max-w-[540px] mx-auto" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[200] bg-ios-bg/200 backdrop-blur-sm flex items-end animate-in fade-in duration-300" onClick={() => setShowAddPet(false)}>
+          <div className="w-full bg-ios-card rounded-t-[32px] p-6 shadow-2xl border-t border-ios-separator transition-all duration-300 max-w-[540px] mx-auto" onClick={e => e.stopPropagation()}>
             <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-8"></div>
             <h3 className="text-2xl font-bold mb-8 text-center">添加新宠宝</h3>
 
@@ -423,13 +449,13 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, posts, onUpdateProf
                 <div className="bg-ios-bg rounded-2xl flex p-1 relative items-center">
                   <button
                     onClick={() => setNewPetGender('公')}
-                    className={`flex-1 py-3 text-[14px] font-bold rounded-xl transition-all ${newPetGender === '公' ? 'bg-white shadow-sm text-blue-500' : 'text-ios-gray'}`}
+                    className={`flex-1 py-3 text-[14px] font-bold rounded-xl transition-all ${newPetGender === '公' ? 'bg-ios-card shadow-sm text-ios-blue' : 'text-ios-gray'}`}
                   >
                     公犬/猫
                   </button>
                   <button
                     onClick={() => setNewPetGender('母')}
-                    className={`flex-1 py-3 text-[14px] font-bold rounded-xl transition-all ${newPetGender === '母' ? 'bg-white shadow-sm text-pink-500' : 'text-ios-gray'}`}
+                    className={`flex-1 py-3 text-[14px] font-bold rounded-xl transition-all ${newPetGender === '母' ? 'bg-ios-bg shadow-sm text-pink-500' : 'text-ios-gray'}`}
                   >
                     母犬/猫
                   </button>
@@ -450,11 +476,11 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, posts, onUpdateProf
                   onChange={e => setNewPetWeight(e.target.value)}
                 />
                 <div className="flex flex-col gap-2 justify-center pl-2">
-                  <label className="flex items-center gap-2 text-[14px] font-medium text-black cursor-pointer w-fit">
+                  <label className="flex items-center gap-2 text-[14px] font-medium text-ios-text cursor-pointer w-fit">
                     <input type="checkbox" className="w-4 h-4 rounded text-ios-blue focus:ring-ios-blue" checked={newPetVaccine} onChange={e => setNewPetVaccine(e.target.checked)} />
                     已接种疫苗
                   </label>
-                  <label className="flex items-center gap-2 text-[14px] font-medium text-black cursor-pointer w-fit">
+                  <label className="flex items-center gap-2 text-[14px] font-medium text-ios-text cursor-pointer w-fit">
                     <input type="checkbox" className="w-4 h-4 rounded text-ios-blue focus:ring-ios-blue" checked={newPetDewormed} onChange={e => setNewPetDewormed(e.target.checked)} />
                     已定期驱虫
                   </label>
@@ -480,26 +506,207 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, posts, onUpdateProf
         </div>
       )}
 
-      <section className="mt-4 px-6 bg-white py-6 mb-16">
-        <h3 className="text-[20px] font-bold tracking-tight mb-6">我的动态</h3>
-        {myPosts.length > 0 ? (
-          <div className="grid grid-cols-3 gap-1.5 rounded-2xl overflow-hidden">
-            {myPosts.map(p => (
-              <div key={p.id} className="aspect-square bg-ios-bg relative group cursor-pointer overflow-hidden">
-                <img src={p.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              </div>
-            ))}
-          </div>
+      <section className="mt-4 px-6 bg-ios-card transition-colors duration-300">
+        <div className="flex gap-8 mb-6 border-b border-ios-separator">
+          <button
+            onClick={() => setActiveTab('posts')}
+            className={`pb-2 text-[17px] font-bold transition-all relative ${activeTab === 'posts' ? 'text-ios-text' : 'text-ios-gray'}`}
+          >
+            我的动态
+            {activeTab === 'posts' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-ios-blue rounded-full"></div>}
+          </button>
+          <button
+            onClick={() => setActiveTab('items')}
+            className={`pb-2 text-[17px] font-bold transition-all relative ${activeTab === 'items' ? 'text-ios-text' : 'text-ios-gray'}`}
+          >
+            我的商品
+            {activeTab === 'items' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-ios-blue rounded-full"></div>}
+          </button>
+        </div>
+
+        {activeTab === 'posts' ? (
+          myPosts.length > 0 ? (
+            <div className="grid grid-cols-3 gap-1.5 rounded-2xl overflow-hidden">
+              {myPosts.map(p => (
+                <div key={p.id} onClick={() => onPostClick?.(p)} className="aspect-square bg-ios-bg relative group cursor-pointer overflow-hidden">
+                  <img src={p.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                  <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="py-24 text-center text-ios-gray bg-ios-bg/30 rounded-3xl border-2 border-dashed border-ios-separator">
+              <span className="material-symbols-outlined !text-[56px] opacity-10">post_add</span>
+              <p className="text-[15px] mt-4 font-medium">开启你的第一篇宠物动态</p>
+            </div>
+          )
         ) : (
-          <div className="py-24 text-center text-ios-gray bg-ios-bg/30 rounded-3xl border-2 border-dashed border-black/5">
-            <span className="material-symbols-outlined !text-[56px] opacity-10">post_add</span>
-            <p className="text-[15px] mt-4 font-medium">开启你的第一篇宠物动态</p>
-          </div>
+          // 我的商品 (仿闲鱼网格)
+          marketItems.filter(i => i.isMine).length > 0 ? (
+            <div className="grid grid-cols-2 gap-3">
+              {marketItems.filter(i => i.isMine).map(item => (
+                <div key={item.id} onClick={() => onItemClick?.(item)} className="bg-ios-bg rounded-[20px] overflow-hidden group active:scale-[0.98] transition-all">
+                  <div className="aspect-square relative">
+                    <img src={item.image} className="w-full h-full object-cover" />
+                    <div className="absolute top-2 left-2 bg-ios-bg/200 backdrop-blur-md text-white text-[10px] px-2 py-0.5 rounded-full">
+                      在售
+                    </div>
+                  </div>
+                  <div className="p-3">
+                    <h4 className="font-bold text-[14px] line-clamp-1 mb-1">{item.name}</h4>
+                    <div className="flex items-center justify-between">
+                      <span className="text-ios-red font-bold text-[16px]">¥{item.price}</span>
+                      <span className="text-[10px] text-ios-gray">{item.location}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="py-24 text-center text-ios-gray bg-ios-bg/30 rounded-3xl border-2 border-dashed border-ios-separator">
+              <span className="material-symbols-outlined !text-[56px] opacity-10">inventory_2</span>
+              <p className="text-[15px] mt-4 font-medium">还没有发布过闲置宝贝</p>
+              <button onClick={() => onNavigate?.(AppTab.PUBLISH)} className="mt-4 text-ios-blue font-bold text-sm">立即去发布</button>
+            </div>
+          )
         )}
       </section>
+
+      {/* 用户列表弹窗 (朋友/粉丝/关注) */}
+      {showUserList && (
+        <div className="fixed inset-0 z-[300] bg-ios-bg/200 backdrop-blur-sm flex items-end animate-in fade-in duration-300" onClick={() => setShowUserList(false)}>
+          <div className="w-full bg-ios-card rounded-t-[32px] max-h-[85vh] flex flex-col animate-in slide-in-from-bottom duration-300 max-w-[540px] mx-auto" onClick={e => e.stopPropagation()}>
+            <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mt-3 mb-1"></div>
+            <header className="px-6 py-4 flex items-center justify-between border-b border-ios-separator">
+              <h2 className="text-xl font-bold">
+                {userListType === 'friends' ? '我的朋友' : userListType === 'fans' ? '我的粉丝' : '我的关注'}
+              </h2>
+              <button onClick={() => setShowUserList(false)} className="w-8 h-8 bg-ios-bg/20 rounded-full flex items-center justify-center">
+                <span className="material-symbols-outlined !text-[18px] text-ios-gray">close</span>
+              </button>
+            </header>
+
+            <div className="flex-1 overflow-y-auto px-4 pb-12 no-scrollbar">
+              {[
+                { name: '雪原小狼', id: 'pet_001', avatar: 'https://picsum.photos/seed/user1/100/100', bio: '一只爱玩的哈士奇', isFriend: true },
+                { name: '喵小白', id: 'pet_888', avatar: 'https://picsum.photos/seed/user2/100/100', bio: '专注睡大觉', isFriend: true },
+                { name: '鹦鹉螺号', id: 'pet_520', avatar: 'https://picsum.photos/seed/user3/100/100', bio: '话痨本痨', isFriend: false },
+                { name: 'Wangwang', id: 'pet_111', avatar: 'https://picsum.photos/seed/user4/100/100', bio: '我是大黄', isFriend: false },
+                { name: '布偶猫一家', id: 'pet_222', avatar: 'https://picsum.photos/seed/user5/100/100', bio: '三只小布偶', isFriend: true },
+                { name: '阿柴', id: 'pet_333', avatar: 'https://picsum.photos/seed/user6/100/100', bio: '柴犬的日常', isFriend: false }
+              ].filter(u => userListType === 'friends' ? u.isFriend : true).map((u, i) => (
+                <div key={i} className="flex items-center gap-4 py-4 border-b border-ios-separator last:border-none active:bg-ios-bg/20 transition-colors px-2 rounded-xl">
+                  <img src={u.avatar} className="size-14 rounded-full object-cover border border-ios-separator" />
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-[16px] text-ios-text">
+                      {u.name}
+                      {u.isFriend && <span className="ml-2 text-[10px] bg-ios-blue/10 text-ios-blue px-1.5 py-0.5 rounded font-bold">互相关注</span>}
+                    </h3>
+                    <p className="text-[13px] text-ios-gray truncate mt-0.5">{u.bio}</p>
+                  </div>
+                  <button className={`px-4 py-1.5 rounded-full text-[13px] font-bold ${u.isFriend || i % 2 === 0 ? 'bg-ios-bg text-ios-gray' : 'bg-ios-blue text-white'}`}>
+                    {u.isFriend || i % 2 === 0 ? '已关注' : '关注'}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 宠宝详情弹窗 */}
+      {showPetDetail && selectedPet && (
+        <div className="fixed inset-0 z-[400] bg-black/60 backdrop-blur-md flex items-center justify-center p-6 animate-in fade-in duration-300" onClick={() => setShowPetDetail(false)}>
+          <div className="bg-ios-card rounded-[32px] w-full max-w-sm overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300" onClick={e => e.stopPropagation()}>
+            <div className="relative aspect-square w-full">
+              <img src={selectedPet.img} className="w-full h-full object-cover" />
+              <button onClick={() => setShowPetDetail(false)} className="absolute top-4 right-4 size-10 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center text-white">
+                <span className="material-symbols-outlined">close</span>
+              </button>
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 p-6 text-white text-center">
+                <h2 className="text-3xl font-bold mb-1 drop-shadow-md">{selectedPet.name}</h2>
+                <div className="flex items-center justify-center gap-2 opacity-90 drop-shadow-md">
+                  <span className="text-[17px] font-medium">{selectedPet.breed}</span>
+                  {selectedPet.gender && selectedPet.gender !== '未知' && (
+                    <span className={`text-[17px] font-bold ${selectedPet.gender === '公' ? 'text-blue-300' : 'text-pink-300'}`}>
+                      {selectedPet.gender === '公' ? '♂' : '♀'}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="p-8">
+              <div className="grid grid-cols-3 gap-3 mb-8">
+                <div className="bg-ios-bg p-3 rounded-2xl flex flex-col items-center">
+                  <span className="text-[10px] text-ios-gray font-bold mb-1 uppercase tracking-wider">性别</span>
+                  <span className={`font-bold text-[15px] ${selectedPet.gender === '公' ? 'text-blue-500' : 'text-pink-500'}`}>
+                    {selectedPet.gender === '公' ? '小王子' : selectedPet.gender === '母' ? '小公主' : '未知'}
+                  </span>
+                </div>
+                <div className="bg-ios-bg p-3 rounded-2xl flex flex-col items-center">
+                  <span className="text-[10px] text-ios-gray font-bold mb-1 uppercase tracking-wider">生日/年龄</span>
+                  <span className="font-bold text-[14px]">{selectedPet.birthday || '未知'}</span>
+                </div>
+                <div className="bg-ios-bg p-3 rounded-2xl flex flex-col items-center">
+                  <span className="text-[10px] text-ios-gray font-bold mb-1 uppercase tracking-wider">当前体重</span>
+                  <span className="font-bold text-[14px]">{selectedPet.weight || '未记录'}</span>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 bg-ios-bg rounded-2xl">
+                  <div className="flex items-center gap-3">
+                    <span className={`material-symbols-outlined !text-[24px] ${selectedPet.vaccineStatus ? 'text-ios-green' : 'text-ios-gray opacity-30'} material-symbols-fill`}>health_and_safety</span>
+                    <span className="font-bold text-[15px]">免疫计划</span>
+                  </div>
+                  <span className={`text-xs font-bold px-2 py-1 rounded-full ${selectedPet.vaccineStatus ? 'bg-ios-green/10 text-ios-green' : 'bg-ios-gray/10 text-ios-gray'}`}>
+                    {selectedPet.vaccineStatus ? '已完成接种' : '未完整接种'}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-ios-bg rounded-2xl">
+                  <div className="flex items-center gap-3">
+                    <span className={`material-symbols-outlined !text-[24px] ${selectedPet.dewormed ? 'text-ios-blue' : 'text-ios-gray opacity-30'} material-symbols-fill`}>bug_report</span>
+                    <span className="font-bold text-[15px]">定期驱虫</span>
+                  </div>
+                  <span className={`text-xs font-bold px-2 py-1 rounded-full ${selectedPet.dewormed ? 'bg-ios-blue/10 text-ios-blue' : 'bg-ios-gray/10 text-ios-gray'}`}>
+                    {selectedPet.dewormed ? '已完成驱虫' : '未定期驱虫'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-8">
+                <button
+                  onClick={() => {
+                    if (selectedPet.id) {
+                      if (confirm(`确定要删除 ${selectedPet.name} 吗？`)) {
+                        onDeletePet?.(selectedPet.id);
+                        setShowPetDetail(false);
+                      }
+                    } else {
+                      alert("演示数据无法删除，请先登录添加自己的宠宝");
+                    }
+                  }}
+                  className="flex-1 py-4 bg-ios-red/10 hover:bg-ios-red/20 rounded-2xl text-[16px] font-bold text-ios-red transition-colors flex items-center justify-center gap-2"
+                >
+                  <span className="material-symbols-outlined !text-[20px]">delete</span>
+                  删除宠宝
+                </button>
+                <button
+                  onClick={() => setShowPetDetail(false)}
+                  className="flex-1 py-4 bg-ios-bg hover:bg-ios-bg/20 rounded-2xl text-[16px] font-bold text-ios-text transition-colors"
+                >
+                  关闭档案
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+
 
 export default ProfileScreen;

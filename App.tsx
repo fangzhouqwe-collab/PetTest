@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { AppTab, Post, MarketItem, UserProfile, Comment, Pet, ChatMessage } from './types';
+import { AppTab, Post, MarketItem, UserProfile, Comment, Pet, ChatMessage, CartItem, Address, Order, Product } from './types';
 import FeedScreen from './components/FeedScreen';
 import MarketScreen, { MARKET_ITEMS as INITIAL_MARKET_ITEMS } from './components/MarketScreen';
 import PublishScreen from './components/PublishScreen';
@@ -12,7 +12,11 @@ import Navigation from './components/Navigation';
 import DetailView from './components/DetailView';
 import AuthScreen from './components/AuthScreen';
 import NotificationScreen from './components/NotificationScreen';
-import { useAuthContext } from './contexts/AuthContext';
+import CartScreen from './components/CartScreen';
+import AddressManager from './components/AddressManager';
+import OrderHistory from './components/OrderHistory';
+import HistoryScreen from './components/HistoryScreen';
+import { AuthProvider, useAuthContext } from './contexts/AuthContext';
 
 // 后端服务
 import * as postService from './services/postService';
@@ -71,6 +75,9 @@ const DEMO_USER: UserProfile = {
   bio: '金毛寻回犬狂热爱好者 & 兼职遛狗人。享受与狗狗们在一起的生活。',
   avatar: 'https://picsum.photos/seed/user/200/200',
   bgImage: 'https://picsum.photos/seed/bg/800/400',
+  following: 450,
+  followers: 1240,
+  likesReceived: 8920,
   pets: [
     { name: '露娜', breed: '金毛寻回犬', img: 'https://picsum.photos/seed/luna/300/300' },
     { name: '麦克斯', breed: '虎斑猫', img: 'https://picsum.photos/seed/max/300/300' }
@@ -96,6 +103,13 @@ const App: React.FC = () => {
   // 测试用户（演示模式）
   const [testUser, setTestUser] = useState(testUserService.getCurrentTestUser());
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // 电商全局状态
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [viewHistory, setViewHistory] = useState<(Post | MarketItem)[]>([]);
+  const [shareData, setShareData] = useState<{ title: string, data?: any } | null>(null);
 
   // 初始化测试消息数据和加载本地数据
   // 初始化测试消息数据和加载本地数据
@@ -215,8 +229,19 @@ const App: React.FC = () => {
     }
   };
 
-  const handleShare = (title: string) => {
-    setShareMessage(`已生成分享卡片: ${title}`);
+  const handleShare = (title: string, data?: any) => {
+    setShareData({ title, data });
+  };
+
+  const handleAddToCart = (product: Product) => {
+    setCartItems(prev => {
+      const existing = prev.find(i => i.productId === product.id);
+      if (existing) {
+        return prev.map(i => i.productId === product.id ? { ...i, quantity: i.quantity + 1 } : i);
+      }
+      return [{ id: `c_${Date.now()}`, productId: product.id, product, quantity: 1, selected: true }, ...prev];
+    });
+    setShareMessage(`已添加至购物车`);
     setTimeout(() => setShareMessage(null), 2000);
   };
 
@@ -287,11 +312,11 @@ const App: React.FC = () => {
         id: Date.now().toString(),
         author: userProfile.name,
         avatar: userProfile.avatar,
-        breed: '我家宠宝',
-        time: '刚刚',
-        image: newPost.image || 'https://picsum.photos/seed/new/400/400',
         title: newPost.title || '无标题',
         content: newPost.content || '',
+        breed: newPost.breed || '我家宠宝',
+        time: '刚刚',
+        image: newPost.image || 'https://picsum.photos/seed/new/400/400',
         likes: 0,
         comments: 0,
         commentsList: [],
@@ -315,6 +340,7 @@ const App: React.FC = () => {
         image_url: newItem.image,
         price: newItem.price || 0,
         category: newItem.category || '其他',
+        breed: newItem.breed,
         age: newItem.age,
         gender: newItem.gender,
         location: newItem.location,
@@ -334,6 +360,7 @@ const App: React.FC = () => {
         age: newItem.age || '未知',
         gender: newItem.gender || '公',
         location: newItem.location || '上海',
+        breed: newItem.breed || '未知',
         distance: 0.1,
         isMine: true
       };
@@ -398,7 +425,12 @@ const App: React.FC = () => {
       await userService.addPet({
         name: pet.name,
         breed: pet.breed,
-        image_url: pet.img
+        image_url: pet.img,
+        gender: pet.gender,
+        birthday: pet.birthday,
+        weight: pet.weight,
+        vaccineStatus: pet.vaccineStatus,
+        dewormed: pet.dewormed
       });
     }
 
@@ -406,6 +438,24 @@ const App: React.FC = () => {
       ...prev,
       pets: [...prev.pets, pet]
     }));
+  };
+
+  const handleDeletePet = async (petId: string) => {
+    if (user) {
+      const success = await userService.deletePet(petId);
+      if (!success) {
+        setShareMessage?.("删除失败，请稍后重试");
+        setTimeout(() => setShareMessage?.(null), 2000);
+        return;
+      }
+    }
+
+    setUserProfile(prev => ({
+      ...prev,
+      pets: prev.pets.filter(p => p.id !== petId)
+    }));
+    setShareMessage?.("宠宝资料已删除");
+    setTimeout(() => setShareMessage?.(null), 2000);
   };
 
   const handleUpdateProfile = async (newProfile: UserProfile) => {
@@ -424,7 +474,7 @@ const App: React.FC = () => {
   // 认证检查
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="min-h-screen flex items-center justify-center bg-ios-bg transition-colors duration-500">
         <div className="text-center">
           <div className="w-16 h-16 bg-ios-blue/10 rounded-2xl flex items-center justify-center mx-auto mb-4 animate-pulse">
             <span className="material-symbols-outlined !text-[36px] text-ios-blue material-symbols-fill">pets</span>
@@ -443,9 +493,17 @@ const App: React.FC = () => {
   const renderScreen = () => {
     switch (currentTab) {
       case AppTab.HOME:
-        return <FeedScreen posts={posts} onConsultAI={() => navigateTo(AppTab.AI_CHAT)} onPostClick={(p) => { setSelectedPost(p); navigateTo(AppTab.POST_DETAIL); }} onToggleLike={toggleLike} onShare={handleShare} />;
+        return <FeedScreen posts={posts} onConsultAI={() => navigateTo(AppTab.AI_CHAT)} onPostClick={(p) => {
+          setSelectedPost(p);
+          setViewHistory(prev => [p, ...prev.filter(i => i.id !== p.id)]);
+          navigateTo(AppTab.POST_DETAIL);
+        }} onToggleLike={toggleLike} onShare={(t) => handleShare(t, { image: posts.find(p => p.title === t)?.image })} />;
       case AppTab.MARKET:
-        return <MarketScreen items={marketItems} onItemClick={(i) => { setSelectedItem(i); navigateTo(AppTab.MARKET_DETAIL); }} />;
+        return <MarketScreen items={marketItems} onItemClick={(i) => {
+          setSelectedItem(i);
+          setViewHistory(prev => [i, ...prev.filter(item => item.id !== i.id)]);
+          navigateTo(AppTab.MARKET_DETAIL);
+        }} onPublishClick={() => navigateTo(AppTab.PUBLISH)} />;
       case AppTab.PUBLISH:
         return <PublishScreen onCancel={goBack} onSelectAI={() => navigateTo(AppTab.AI_CHAT)} onPublish={handlePublish} onPublishItem={handlePublishItem} />;
       case AppTab.MESSAGES:
@@ -458,13 +516,26 @@ const App: React.FC = () => {
         return <ProfileScreen
           user={userProfile}
           posts={posts}
+          marketItems={marketItems}
           onUpdateProfile={handleUpdateProfile}
           onAddPet={handleAddPet}
+          onDeletePet={handleDeletePet}
           onLogout={() => {
             setIsAuthenticated(false);
             setCurrentTab(AppTab.HOME);
             setHistory([]);
           }}
+          onPostClick={(p) => {
+            setSelectedPost(p);
+            setViewHistory(prev => [p, ...prev.filter(i => i.id !== p.id)]);
+            navigateTo(AppTab.POST_DETAIL);
+          }}
+          onItemClick={(i) => {
+            setSelectedItem(i);
+            setViewHistory(prev => [i, ...prev.filter(item => item.id !== i.id)]);
+            navigateTo(AppTab.MARKET_DETAIL);
+          }}
+          onNavigate={navigateTo}
         />;
       case AppTab.AI_CHAT:
         return <AIChatScreen onBack={goBack} />;
@@ -484,7 +555,7 @@ const App: React.FC = () => {
           onBack={goBack}
           onAddComment={handleAddComment}
           onToggleLike={toggleLike}
-          onShare={handleShare}
+          onShare={(t) => handleShare(t, selectedPost)}
           onChat={async (name, avatar) => {
             if (!user || userProfile.name === name) return; // 不能聊自己
             // 如果有 userId（Post 接口已更新），可以创建真实会话
@@ -503,9 +574,67 @@ const App: React.FC = () => {
           }}
         />;
       case AppTab.MARKET_DETAIL:
-        return <DetailView type="market" data={selectedItem} onBack={goBack} onChat={(n, a) => { setChatTarget({ id: 'seller', name: n, avatar: a }); navigateTo(AppTab.USER_CHAT); }} onShare={handleShare} />;
+        return <DetailView type="market" data={selectedItem} onBack={goBack} onChat={(n, a) => { setChatTarget({ id: 'seller', name: n, avatar: a }); navigateTo(AppTab.USER_CHAT); }} onShare={(t) => handleShare(t, selectedItem)} onAddToCart={handleAddToCart} />;
       case AppTab.NOTIFICATIONS:
         return <NotificationScreen onBack={goBack} />;
+      case AppTab.CART:
+        return <CartScreen
+          cartItems={cartItems}
+          onUpdateQuantity={(id, d) => setCartItems(p => p.map(i => i.id === id ? { ...i, quantity: Math.max(1, i.quantity + d) } : i))}
+          onToggleSelect={(id) => setCartItems(p => p.map(i => i.id === id ? { ...i, selected: !i.selected } : i))}
+          onToggleSelectAll={() => {
+            const all = cartItems.length > 0 && cartItems.every(i => i.selected);
+            setCartItems(p => p.map(i => ({ ...i, selected: !all })));
+          }}
+          onDelete={(id) => setCartItems(p => p.filter(i => i.id !== id))}
+          onCheckout={() => {
+            const selected = cartItems.filter(i => i.selected);
+            if (selected.length === 0) return;
+            const newOrder: Order = {
+              id: Date.now().toString(),
+              items: selected,
+              totalAmount: selected.reduce((sum, i) => sum + i.product.price * i.quantity, 0),
+              status: 'pending',
+              createdAt: new Date().toISOString(),
+              address: addresses.find(a => a.isDefault) || addresses[0] || { id: '0', receiver: '未设置地址', phone: '', region: '', detail: '', isDefault: true }
+            };
+            setOrders(prev => [newOrder, ...prev]);
+            setCartItems(p => p.filter(i => !i.selected)); // 结算后清空选中的购物车项
+            navigateTo(AppTab.ORDERS);
+          }}
+          onBack={goBack}
+        />;
+      case AppTab.ADDRESS:
+        return <AddressManager
+          addresses={addresses}
+          onAddAddress={(a) => setAddresses(p => {
+            const isDefault = p.length === 0 ? true : a.isDefault; // 发出第一个必定默认为true
+            let next = [...p, { ...a, id: Date.now().toString(), isDefault }];
+            if (isDefault) next = next.map(i => ({ ...i, isDefault: i.id === next[next.length - 1].id }));
+            return next;
+          })}
+          onUpdateAddress={(id, a) => setAddresses(p => {
+            let next = p.map(i => i.id === id ? { ...i, ...a } : i);
+            if (a.isDefault) next = next.map(i => ({ ...i, isDefault: i.id === id }));
+            return next;
+          })}
+          onDeleteAddress={(id) => setAddresses(p => p.filter(i => i.id !== id))}
+          onSetDefault={(id) => setAddresses(p => p.map(i => ({ ...i, isDefault: i.id === id })))}
+          onBack={goBack}
+        />;
+      case AppTab.ORDERS:
+        return <OrderHistory
+          orders={orders}
+          onBack={goBack}
+          onNavigate={navigateTo}
+          onPay={(id) => setOrders(p => p.map(o => o.id === id ? { ...o, status: 'completed' } : o))}
+        />;
+      case AppTab.HISTORY:
+        return <HistoryScreen
+          historyItems={viewHistory}
+          onBack={goBack}
+          onClear={() => setViewHistory([])}
+        />;
       default:
         return <FeedScreen
           posts={posts}
@@ -513,15 +642,16 @@ const App: React.FC = () => {
           onPostClick={(p) => { setSelectedPost(p); navigateTo(AppTab.POST_DETAIL); }}
           onToggleLike={toggleLike}
           onShare={handleShare}
-          onNotification={() => navigateTo(AppTab.NOTIFICATIONS)} // 添加跳转
+          onNotification={() => navigateTo(AppTab.NOTIFICATIONS)}
+          onAddToCart={handleAddToCart}
         />;
     }
   };
 
-  const hideNav = [AppTab.AI_CHAT, AppTab.PUBLISH, AppTab.POST_DETAIL, AppTab.MARKET_DETAIL, AppTab.USER_CHAT, AppTab.NOTIFICATIONS].includes(currentTab);
+  const hideNav = [AppTab.AI_CHAT, AppTab.PUBLISH, AppTab.POST_DETAIL, AppTab.MARKET_DETAIL, AppTab.USER_CHAT, AppTab.NOTIFICATIONS, AppTab.CART, AppTab.ADDRESS, AppTab.ORDERS, AppTab.HISTORY].includes(currentTab);
 
   return (
-    <div className="flex flex-col min-h-screen bg-white">
+    <div className="flex flex-col min-h-screen bg-ios-bg transition-colors duration-500">
       {dataLoading && (
         <div className="fixed top-0 left-0 right-0 z-[1000] h-1 bg-ios-blue/20">
           <div className="h-full bg-ios-blue animate-pulse" style={{ width: '60%' }}></div>
@@ -536,6 +666,58 @@ const App: React.FC = () => {
       {shareMessage && (
         <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[1000] bg-black/80 text-white px-6 py-2 rounded-full text-sm font-bold animate-in fade-in slide-in-from-top-4 duration-300">
           {shareMessage}
+        </div>
+      )}
+      {shareData && (
+        <div className="fixed inset-0 z-[2000] bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in duration-300" onClick={() => setShareData(null)}>
+          <div className="bg-ios-card rounded-[32px] w-full max-w-sm overflow-hidden shadow-2xl transition-all duration-300" onClick={e => e.stopPropagation()}>
+            <div className="relative aspect-[4/5] bg-ios-bg w-full">
+              {shareData.data?.image ? (
+                <img src={shareData.data.image} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-gradient-to-tr from-ios-blue/20 to-purple-500/20">
+                  <span className="material-symbols-outlined !text-[80px] text-white drop-shadow-md">pets</span>
+                </div>
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent"></div>
+              <div className="absolute bottom-6 left-6 right-6 text-white">
+                <h2 className="text-2xl font-bold mb-2 leading-tight drop-shadow-md">{shareData.title}</h2>
+                {shareData.data?.price && (
+                  <p className="text-ios-red font-bold text-xl drop-shadow-md">¥{shareData.data.price}</p>
+                )}
+                {shareData.data?.author && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <img src={shareData.data.avatar} className="size-6 rounded-full border border-white" />
+                    <span className="text-sm font-medium opacity-90">{shareData.data.author}</span>
+                  </div>
+                )}
+              </div>
+              <div className="absolute top-4 right-4 bg-white/20 backdrop-blur-md rounded-xl p-2 flex items-center justify-center">
+                <span className="material-symbols-outlined text-white">qr_code_2</span>
+              </div>
+            </div>
+
+            <div className="p-6">
+              <p className="text-center text-[15px] font-bold text-ios-text mb-6">分享给朋友长按即可保存图片</p>
+              <div className="grid grid-cols-3 gap-4">
+                <button onClick={() => setShareData(null)} className="flex flex-col items-center gap-2">
+                  <div className="size-12 bg-green-500 rounded-full flex items-center justify-center text-white"><span className="material-symbols-outlined">chat</span></div>
+                  <span className="text-xs font-medium">微信好友</span>
+                </button>
+                <button onClick={() => setShareData(null)} className="flex flex-col items-center gap-2">
+                  <div className="size-12 bg-green-600 rounded-full flex items-center justify-center text-white"><span className="material-symbols-outlined">group</span></div>
+                  <span className="text-xs font-medium">朋友圈</span>
+                </button>
+                <button onClick={() => setShareData(null)} className="flex flex-col items-center gap-2">
+                  <div className="size-12 bg-blue-500 rounded-full flex items-center justify-center text-white"><span className="material-symbols-outlined">download</span></div>
+                  <span className="text-xs font-medium">保存本地</span>
+                </button>
+              </div>
+              <button onClick={() => setShareData(null)} className="w-full mt-6 py-3 bg-ios-bg rounded-2xl text-[15px] font-bold text-ios-gray">
+                取消
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

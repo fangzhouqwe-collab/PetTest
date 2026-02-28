@@ -239,7 +239,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onSuccess }) => {
     // ... (keep existing code) ...
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-ios-blue/10 via-white to-emerald-50 flex flex-col items-center justify-center px-6">
+        <div className="min-h-screen bg-gradient-to-br from-ios-blue/10 via-ios-bg to-emerald-50/10 flex flex-col items-center justify-center px-6 transition-colors duration-500">
             <div className="w-full max-w-sm">
                 {/* Logo */}
                 <div className="text-center mb-6">
@@ -253,16 +253,16 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onSuccess }) => {
                 {/* 登录方式切换 Tab */}
                 {isLogin && !isForgotPassword && (
                     <div className="flex bg-black/5 p-1 rounded-2xl mb-6 relative">
-                        <div className={`absolute inset-y-1 w-[calc(50%-4px)] bg-white rounded-xl shadow-sm transition-all duration-300 ${loginMethod === 'phone' ? 'translate-x-[calc(100%+4px)]' : 'translate-x-0'}`}></div>
+                        <div className={`absolute inset-y-1 w-[calc(50%-4px)] bg-ios-card rounded-xl shadow-sm transition-all duration-300 ${loginMethod === 'phone' ? 'translate-x-[calc(100%+4px)]' : 'translate-x-0'}`}></div>
                         <button
                             onClick={() => { setLoginMethod('email'); setError(null); }}
-                            className={`flex-1 relative z-10 py-2.5 text-sm font-bold transition-colors ${loginMethod === 'email' ? 'text-black' : 'text-ios-gray'}`}
+                            className={`flex-1 relative z-10 py-2.5 text-sm font-bold transition-colors ${loginMethod === 'email' ? 'text-ios-text' : 'text-ios-gray'}`}
                         >
                             邮箱密码
                         </button>
                         <button
                             onClick={() => { setLoginMethod('phone'); setError(null); }}
-                            className={`flex-1 relative z-10 py-2.5 text-sm font-bold transition-colors ${loginMethod === 'phone' ? 'text-black' : 'text-ios-gray'}`}
+                            className={`flex-1 relative z-10 py-2.5 text-sm font-bold transition-colors ${loginMethod === 'phone' ? 'text-ios-text' : 'text-ios-gray'}`}
                         >
                             手机验证码
                         </button>
@@ -279,7 +279,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onSuccess }) => {
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
                                 placeholder="您的昵称"
-                                className="w-full bg-white border border-black/10 rounded-2xl px-5 py-4 text-[17px] focus:ring-2 focus:ring-ios-blue focus:border-transparent transition-all shadow-sm"
+                                className="w-full bg-ios-card border border-ios-separator rounded-2xl px-5 py-4 text-[17px] focus:ring-2 focus:ring-ios-blue focus:border-transparent transition-all shadow-sm"
                             />
                         </div>
                     )}
@@ -295,7 +295,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onSuccess }) => {
                                         onChange={(e) => setEmail(e.target.value)}
                                         placeholder="your@email.com"
                                         required
-                                        className="w-full bg-white border border-black/10 rounded-2xl px-5 py-4 text-[17px] focus:ring-2 focus:ring-ios-blue focus:border-transparent transition-all shadow-sm"
+                                        className="w-full bg-ios-card border border-ios-separator rounded-2xl px-5 py-4 text-[17px] focus:ring-2 focus:ring-ios-blue focus:border-transparent transition-all shadow-sm"
                                     />
                                 </div>
                             </div>
@@ -321,7 +321,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onSuccess }) => {
                                         placeholder="••••••••"
                                         required
                                         minLength={6}
-                                        className="w-full bg-white border border-black/10 rounded-2xl px-5 py-4 text-[17px] focus:ring-2 focus:ring-ios-blue focus:border-transparent transition-all shadow-sm"
+                                        className="w-full bg-ios-card border border-ios-separator rounded-2xl px-5 py-4 text-[17px] focus:ring-2 focus:ring-ios-blue focus:border-transparent transition-all shadow-sm"
                                     />
                                 </div>
                             )}
@@ -337,7 +337,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onSuccess }) => {
                                     placeholder="请输入手机号"
                                     required
                                     maxLength={11}
-                                    className="w-full bg-white border border-black/10 rounded-2xl px-5 py-4 text-[17px] focus:ring-2 focus:ring-ios-blue focus:border-transparent transition-all shadow-sm"
+                                    className="w-full bg-ios-card border border-ios-separator rounded-2xl px-5 py-4 text-[17px] focus:ring-2 focus:ring-ios-blue focus:border-transparent transition-all shadow-sm"
                                 />
                             </div>
                             <div className="space-y-1">
@@ -350,7 +350,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onSuccess }) => {
                                         placeholder="6位验证码"
                                         required
                                         maxLength={6}
-                                        className="flex-1 bg-white border border-black/10 rounded-2xl px-5 py-4 text-[17px] focus:ring-2 focus:ring-ios-blue focus:border-transparent transition-all shadow-sm"
+                                        className="flex-1 bg-ios-card border border-ios-separator rounded-2xl px-5 py-4 text-[17px] focus:ring-2 focus:ring-ios-blue focus:border-transparent transition-all shadow-sm font-mono"
                                     />
                                     <button
                                         type="button"
@@ -447,7 +447,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onSuccess }) => {
                 {/* 快速体验（演示模式） */}
                 <button
                     onClick={() => onSuccess?.()}
-                    className="w-full bg-white border border-black/10 text-black font-medium py-4 rounded-2xl text-[15px] active:scale-[0.98] transition-all shadow-sm"
+                    className="w-full bg-ios-card border border-ios-separator text-ios-text"
                 >
                     <span className="flex items-center justify-center gap-2">
                         <span className="material-symbols-outlined !text-[20px]">play_arrow</span>
