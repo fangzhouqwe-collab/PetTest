@@ -1,8 +1,7 @@
-
 import React, { useState, useRef } from 'react';
 import { Post, MarketItem } from '../types';
 import { getCurrentLocation } from '../services/qqMapService';
-import { uploadVideo } from '../services/uploadService';
+import { uploadVideo, uploadImage } from '../services/uploadService';
 
 interface PublishScreenProps {
   onCancel: () => void;
@@ -19,7 +18,10 @@ const PublishScreen: React.FC<PublishScreenProps> = ({ onCancel, onSelectAI, onP
   const [location, setLocation] = useState('');
   const [price, setPrice] = useState<string>('');
   const [category, setCategory] = useState<MarketItem['category']>('狗狗');
+  // images 数组中保存的可能是本地 File 对应的 DataURL
   const [images, setImages] = useState<string[]>([]);
+  // 额外保存本地文件对象以便上传
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
 
   // 新增字段
   const [gender, setGender] = useState<'公' | '母' | '亚成体' | '不限'>('公');
@@ -32,32 +34,73 @@ const PublishScreen: React.FC<PublishScreenProps> = ({ onCancel, onSelectAI, onP
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [isUploading, setIsUploading] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
   const videoRef = useRef<HTMLInputElement>(null);
 
-  const handlePublish = () => {
-    if (type === 'post') {
-      const tagContent = tags.length > 0 ? tags.map(t => `#${t}`).join(' ') + ' ' : '';
-      onPublish({
-        title,
-        content: tagContent + content,
-        image: images[0] || undefined,
-        images: images,
-        video: video || undefined,
-        location: location || undefined
-      });
-    } else {
-      onPublishItem({
-        name: title,
-        description: content,
-        image: images[0] || undefined,
-        price: parseFloat(price) || 0,
-        category,
-        location: location || '上海',
-        gender: gender === '不限' ? '公' : gender,
-        age: age || '未知',
-        vaccines,
-        dewormed,
-      });
+  const handlePublish = async () => {
+    setIsPublishing(true);
+    try {
+      if (type === 'post') {
+        const tagContent = tags.length > 0 ? tags.map(t => `#${t}`).join(' ') + ' ' : '';
+        
+        let imageUrlToSave = undefined;
+        const uploadedImages: string[] = [];
+        
+        // 依次上传图片
+        for (const file of imageFiles) {
+            const uploadRes = await uploadImage(file);
+            if (uploadRes.success && uploadRes.url) {
+                uploadedImages.push(uploadRes.url);
+            }
+        }
+        
+        // 当作为封面的第一张图
+        if (uploadedImages.length > 0) {
+            imageUrlToSave = uploadedImages[0];
+        } else if (images.length > 0 && !imageFiles.length) {
+            // 兼容已有 base64 （如演示数据）
+            imageUrlToSave = images[0];
+            uploadedImages.push(...images);
+        }
+
+        onPublish({
+          title,
+          content: tagContent + content,
+          image: imageUrlToSave,
+          images: uploadedImages.length > 0 ? uploadedImages : undefined,
+          video: video || undefined,
+          location: location || undefined
+        });
+      } else {
+          
+        let imageUrlToSave = undefined;
+        if (imageFiles.length > 0) {
+            const uploadRes = await uploadImage(imageFiles[0]);
+            if (uploadRes.success && uploadRes.url) {
+                imageUrlToSave = uploadRes.url;
+            }
+        } else if (images.length > 0) {
+            imageUrlToSave = images[0];
+        }
+          
+        onPublishItem({
+          name: title,
+          description: content,
+          image: imageUrlToSave,
+          price: parseFloat(price) || 0,
+          category,
+          location: location || '上海',
+          gender: gender === '不限' ? '公' : gender,
+          age: age || '未知',
+          vaccines,
+          dewormed,
+        });
+      }
+    } catch (error) {
+        console.error('发布失败:', error);
+        alert('发布异常，请重试');
+    } finally {
+        setIsPublishing(false);
     }
   };
 
@@ -72,7 +115,10 @@ const PublishScreen: React.FC<PublishScreenProps> = ({ onCancel, onSelectAI, onP
   const onImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      Array.from(files).forEach((f: File) => {
+      const newFiles = Array.from(files);
+      setImageFiles(prev => [...prev, ...newFiles]);
+      
+      newFiles.forEach((f: File) => {
         const r = new FileReader();
         r.onload = () => setImages(prev => [...prev, r.result as string]);
         r.readAsDataURL(f);
@@ -82,6 +128,7 @@ const PublishScreen: React.FC<PublishScreenProps> = ({ onCancel, onSelectAI, onP
 
   const removeImage = (index: number) => {
     setImages(prev => prev.filter((_, i) => i !== index));
+    setImageFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   const onVideoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -127,9 +174,11 @@ const PublishScreen: React.FC<PublishScreenProps> = ({ onCancel, onSelectAI, onP
     return (
       <div className="flex flex-col min-h-screen bg-white animate-in slide-in-from-right duration-300">
         <header className="h-[88px] pt-10 px-4 flex items-center justify-between border-b border-black/5 shrink-0">
-          <button onClick={() => setStep('choice')} className="text-ios-blue text-[17px]">取消</button>
+          <button onClick={() => setStep('choice')} disabled={isPublishing} className="text-ios-blue text-[17px] disabled:opacity-30">取消</button>
           <span className="font-bold text-[17px]">{type === 'post' ? '新动态' : '发布闲置'}</span>
-          <button onClick={handlePublish} disabled={!title || !content} className="text-ios-blue font-bold text-[17px] disabled:opacity-30">发布</button>
+          <button onClick={handlePublish} disabled={!title || !content || isPublishing} className="text-ios-blue font-bold text-[17px] disabled:opacity-30">
+              {isPublishing ? '发布中...' : '发布'}
+          </button>
         </header>
         <main className="p-4 space-y-6 overflow-y-auto no-scrollbar">
 

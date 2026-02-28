@@ -21,6 +21,11 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, posts, onUpdateProf
   const [newPetName, setNewPetName] = useState('');
   const [newPetBreed, setNewPetBreed] = useState('');
   const [newPetImg, setNewPetImg] = useState<string | null>(null);
+  const [newPetGender, setNewPetGender] = useState<'公' | '母' | '未知'>('未知');
+  const [newPetBirthday, setNewPetBirthday] = useState('');
+  const [newPetWeight, setNewPetWeight] = useState('');
+  const [newPetVaccine, setNewPetVaccine] = useState(false);
+  const [newPetDewormed, setNewPetDewormed] = useState(false);
 
   const bgInputRef = useRef<HTMLInputElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -37,11 +42,21 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, posts, onUpdateProf
       onAddPet({
         name: newPetName,
         breed: newPetBreed,
-        img: newPetImg || `https://picsum.photos/seed/${Date.now()}/300/300`
+        img: newPetImg || `https://picsum.photos/seed/${Date.now()}/300/300`,
+        gender: newPetGender,
+        birthday: newPetBirthday,
+        weight: newPetWeight,
+        vaccineStatus: newPetVaccine,
+        dewormed: newPetDewormed
       });
       setNewPetName('');
       setNewPetBreed('');
       setNewPetImg(null);
+      setNewPetGender('未知');
+      setNewPetBirthday('');
+      setNewPetWeight('');
+      setNewPetVaccine(false);
+      setNewPetDewormed(false);
       setShowAddPet(false);
     }
   };
@@ -220,12 +235,32 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, posts, onUpdateProf
         </div>
         <div className="flex overflow-x-auto no-scrollbar gap-4 pb-2">
           {user.pets.map((pet, i) => (
-            <div key={i} className="shrink-0 w-24 aspect-square rounded-[20px] overflow-hidden relative active:scale-95 transition-all shadow-sm group border border-black/5">
-              <img src={pet.img} className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end items-center p-2 text-center">
-                <h4 className="font-bold text-white text-[12px] truncate w-full leading-tight">{pet.name}</h4>
-                <p className="text-[9px] text-white/80 font-medium truncate w-full">{pet.breed}</p>
+            <div key={i} className="shrink-0 w-36 overflow-hidden rounded-[20px] bg-ios-bg border border-black/5 relative shadow-sm group active:scale-95 transition-all">
+              <div className="aspect-square w-full relative">
+                <img src={pet.img} className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-2.5">
+                  <div className="flex items-center justify-between mb-0.5 mt-auto">
+                    <h4 className="font-bold text-white text-[14px] truncate flex-1 leading-tight drop-shadow-md">{pet.name}</h4>
+                    {pet.gender && pet.gender !== '未知' && (
+                      <span className={`text-[12px] font-bold ${pet.gender === '公' ? 'text-blue-400' : 'text-pink-400'} drop-shadow-md`}>
+                        {pet.gender === '公' ? '♂' : '♀'}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-white/90 font-medium truncate w-full flex items-center gap-1">
+                    {pet.breed} {pet.weight ? <span className="text-[10px] opacity-80">• {pet.weight}</span> : ''}
+                  </p>
+                </div>
               </div>
+
+              {/* 下半部分：徽章信息 */}
+              {(pet.vaccineStatus || pet.dewormed || pet.birthday) && (
+                <div className="px-2 py-2 flex flex-wrap gap-1 bg-white">
+                  {pet.birthday && <span className="text-[10px] bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded border border-purple-100">{pet.birthday}</span>}
+                  {pet.vaccineStatus && <span className="text-[10px] bg-green-50 text-green-600 px-1.5 py-0.5 rounded border border-green-100">已免</span>}
+                  {pet.dewormed && <span className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded border border-blue-100">已驱虫</span>}
+                </div>
+              )}
             </div>
           ))}
           {user.pets.length === 0 && (
@@ -382,6 +417,49 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, posts, onUpdateProf
                 value={newPetBreed}
                 onChange={e => setNewPetBreed(e.target.value)}
               />
+
+              {/* 细化资料 */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-ios-bg rounded-2xl flex p-1 relative items-center">
+                  <button
+                    onClick={() => setNewPetGender('公')}
+                    className={`flex-1 py-3 text-[14px] font-bold rounded-xl transition-all ${newPetGender === '公' ? 'bg-white shadow-sm text-blue-500' : 'text-ios-gray'}`}
+                  >
+                    公犬/猫
+                  </button>
+                  <button
+                    onClick={() => setNewPetGender('母')}
+                    className={`flex-1 py-3 text-[14px] font-bold rounded-xl transition-all ${newPetGender === '母' ? 'bg-white shadow-sm text-pink-500' : 'text-ios-gray'}`}
+                  >
+                    母犬/猫
+                  </button>
+                </div>
+                <input
+                  type="date"
+                  className="w-full bg-ios-bg border-none rounded-2xl px-4 py-4 text-[15px] focus:ring-2 focus:ring-ios-blue text-center"
+                  value={newPetBirthday}
+                  onChange={e => setNewPetBirthday(e.target.value)}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <input
+                  className="w-full bg-ios-bg border-none rounded-2xl px-5 py-4 text-[15px] focus:ring-2 focus:ring-ios-blue"
+                  placeholder="体重 (如: 3.5kg)"
+                  value={newPetWeight}
+                  onChange={e => setNewPetWeight(e.target.value)}
+                />
+                <div className="flex flex-col gap-2 justify-center pl-2">
+                  <label className="flex items-center gap-2 text-[14px] font-medium text-black cursor-pointer w-fit">
+                    <input type="checkbox" className="w-4 h-4 rounded text-ios-blue focus:ring-ios-blue" checked={newPetVaccine} onChange={e => setNewPetVaccine(e.target.checked)} />
+                    已接种疫苗
+                  </label>
+                  <label className="flex items-center gap-2 text-[14px] font-medium text-black cursor-pointer w-fit">
+                    <input type="checkbox" className="w-4 h-4 rounded text-ios-blue focus:ring-ios-blue" checked={newPetDewormed} onChange={e => setNewPetDewormed(e.target.checked)} />
+                    已定期驱虫
+                  </label>
+                </div>
+              </div>
               <div className="pt-4 space-y-3">
                 <button
                   onClick={handleAddPetClick}

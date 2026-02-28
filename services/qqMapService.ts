@@ -1,6 +1,4 @@
-// 腾讯地图定位服务
-
-declare const TMap: any;
+// 免费无限制稳定定位服务 (替代原腾讯地图和脆弱接口)
 
 interface LocationResult {
     province: string;
@@ -10,64 +8,59 @@ interface LocationResult {
 
 /**
  * 获取当前位置的省市信息
+ * 首先尝试拿到 GPS 并通过 BigDataCloud 进行高速逆地址解析
+ * 如果没有授予 GPS 权限，也会传空参数回落到 BigDataCloud 默认的 IP 定位端点
  * @returns Promise<LocationResult> 返回省市信息
  */
 export async function getCurrentLocation(): Promise<LocationResult> {
-    return new Promise((resolve, reject) => {
-        // 检查浏览器是否支持地理定位
+    const fetchLocation = async (lat?: number, lon?: number): Promise<LocationResult> => {
+        try {
+            // BigDataCloud 免费高速接口，自动支持经纬度和 IP fallback
+            const url = lat && lon
+                ? `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=zh`
+                : `https://api.bigdatacloud.net/data/reverse-geocode-client?localityLanguage=zh`;
+
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (data) {
+                const province = data.principalSubdivision || '';
+                const city = data.city || data.locality || province;
+
+                return {
+                    province,
+                    city,
+                    formatted: `${province} ${city}`.trim() || '未知城市'
+                };
+            }
+            throw new Error('定位接口未返回有效信');
+        } catch (error) {
+            console.error('BigDataCloud 定位获取失败:', error);
+            return { province: '', city: '', formatted: '未知位置' };
+        }
+    };
+
+    return new Promise((resolve) => {
         if (!navigator.geolocation) {
-            reject(new Error('浏览器不支持地理定位'));
+            console.warn('浏览器不支持地理定位，退化为纯 IP 定位');
+            resolve(fetchLocation());
             return;
         }
 
         // 获取当前位置坐标
         navigator.geolocation.getCurrentPosition(
-            async (position) => {
+            (position) => {
                 const { latitude, longitude } = position.coords;
-
-                try {
-                    // 使用腾讯地图逆地理编码
-                    const geocoder = new TMap.service.Geocoder();
-                    const result = await geocoder.getAddress({
-                        location: new TMap.LatLng(latitude, longitude)
-                    });
-
-                    if (result.status === 0 && result.result) {
-                        const addressComponent = result.result.address_component;
-                        const province = addressComponent.province || '';
-                        const city = addressComponent.city || '';
-
-                        resolve({
-                            province,
-                            city,
-                            formatted: `${province} ${city}`.trim()
-                        });
-                    } else {
-                        reject(new Error('逆地理编码失败'));
-                    }
-                } catch (error) {
-                    reject(error);
-                }
+                resolve(fetchLocation(latitude, longitude));
             },
             (error) => {
-                let message = '定位失败';
-                switch (error.code) {
-                    case error.PERMISSION_DENIED:
-                        message = '用户拒绝了定位请求';
-                        break;
-                    case error.POSITION_UNAVAILABLE:
-                        message = '位置信息不可用';
-                        break;
-                    case error.TIMEOUT:
-                        message = '定位请求超时';
-                        break;
-                }
-                reject(new Error(message));
+                console.warn(`获取 GPS 坐标失败 (${error.message})，退化为纯 IP 定位`);
+                resolve(fetchLocation());
             },
             {
                 enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 0
+                timeout: 8000,
+                maximumAge: 60000
             }
         );
     });

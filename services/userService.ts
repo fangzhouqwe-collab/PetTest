@@ -13,7 +13,7 @@ export const getCurrentUserProfile = async (): Promise<UserProfile | null> => {
         .from('profiles')
         .select(`
       *,
-      pets (id, name, breed, image_url)
+      pets (id, name, breed, image_url, gender, birthday, weight, vaccine_status, dewormed)
     `)
         .eq('id', userId)
         .single();
@@ -32,7 +32,12 @@ export const getCurrentUserProfile = async (): Promise<UserProfile | null> => {
         pets: (p.pets || []).map((pet: any) => ({
             name: pet.name,
             breed: pet.breed,
-            img: pet.image_url || 'https://picsum.photos/seed/pet/300/300'
+            img: pet.image_url || 'https://picsum.photos/seed/pet/300/300',
+            gender: pet.gender,
+            birthday: pet.birthday,
+            weight: pet.weight,
+            vaccineStatus: pet.vaccine_status,
+            dewormed: pet.dewormed
         }))
     };
 };
@@ -45,7 +50,7 @@ export const getUserProfileById = async (userId: string): Promise<UserProfile | 
         .from('profiles')
         .select(`
       *,
-      pets (id, name, breed, image_url)
+      pets (id, name, breed, image_url, gender, birthday, weight, vaccine_status, dewormed)
     `)
         .eq('id', userId)
         .single();
@@ -64,7 +69,12 @@ export const getUserProfileById = async (userId: string): Promise<UserProfile | 
         pets: (p.pets || []).map((pet: any) => ({
             name: pet.name,
             breed: pet.breed,
-            img: pet.image_url || 'https://picsum.photos/seed/pet/300/300'
+            img: pet.image_url || 'https://picsum.photos/seed/pet/300/300',
+            gender: pet.gender,
+            birthday: pet.birthday,
+            weight: pet.weight,
+            vaccineStatus: pet.vaccine_status,
+            dewormed: pet.dewormed
         }))
     };
 };
@@ -97,11 +107,15 @@ export const updateUserProfile = async (data: {
     return true;
 };
 
-// 添加宠物
 export const addPet = async (pet: {
     name: string;
     breed: string;
     image_url?: string;
+    gender?: '公' | '母' | '未知';
+    birthday?: string;
+    weight?: string;
+    vaccineStatus?: boolean;
+    dewormed?: boolean;
 }): Promise<Pet | null> => {
     if (!isSupabaseConfigured) return null;
 
@@ -114,7 +128,12 @@ export const addPet = async (pet: {
             user_id: userId,
             name: pet.name,
             breed: pet.breed,
-            image_url: pet.image_url
+            image_url: pet.image_url,
+            gender: pet.gender,
+            birthday: pet.birthday,
+            weight: pet.weight,
+            vaccine_status: pet.vaccineStatus,
+            dewormed: pet.dewormed
         } as any)
         .select()
         .single();
@@ -128,7 +147,12 @@ export const addPet = async (pet: {
     return {
         name: d.name,
         breed: d.breed,
-        img: d.image_url || 'https://picsum.photos/seed/pet/300/300'
+        img: d.image_url || 'https://picsum.photos/seed/pet/300/300',
+        gender: d.gender,
+        birthday: d.birthday,
+        weight: d.weight,
+        vaccineStatus: d.vaccine_status,
+        dewormed: d.dewormed
     };
 };
 

@@ -82,6 +82,11 @@ export interface Pet {
   name: string;
   breed: string;
   img: string;
+  gender?: '公' | '母' | '未知';
+  birthday?: string; // YYYY-MM-DD
+  weight?: string; // e.g. "3.5kg"
+  vaccineStatus?: boolean; // 是否接种疫苗
+  dewormed?: boolean; // 是否驱虫
 }
 
 export interface UserProfile {

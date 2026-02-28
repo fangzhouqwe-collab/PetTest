@@ -22,6 +22,8 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     bio TEXT DEFAULT '',
     avatar_url TEXT,
     bg_image_url TEXT,
+    email VARCHAR(255),
+    phone VARCHAR(50),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -35,6 +37,11 @@ CREATE TABLE IF NOT EXISTS public.pets (
     name VARCHAR(100) NOT NULL,
     breed VARCHAR(100) NOT NULL,
     image_url TEXT,
+    gender VARCHAR(20),
+    birthday DATE,
+    weight VARCHAR(50),
+    vaccine_status BOOLEAN DEFAULT FALSE,
+    dewormed BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -267,11 +274,13 @@ CREATE TRIGGER on_comment_change
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-    INSERT INTO public.profiles (id, name, avatar_url)
+    INSERT INTO public.profiles (id, name, avatar_url, email, phone)
     VALUES (
         NEW.id,
         COALESCE(NEW.raw_user_meta_data->>'name', '新用户'),
-        COALESCE(NEW.raw_user_meta_data->>'avatar_url', 'https://picsum.photos/seed/' || NEW.id || '/200/200')
+        COALESCE(NEW.raw_user_meta_data->>'avatar_url', 'https://picsum.photos/seed/' || NEW.id || '/200/200'),
+        NEW.email,
+        NEW.phone
     );
     RETURN NEW;
 END;

@@ -58,6 +58,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onSuccess }) => {
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [rememberPassword, setRememberPassword] = useState(true);
+    const [isForgotPassword, setIsForgotPassword] = useState(false);
     const [savedAccounts, setSavedAccounts] = useState<SavedAccount[]>([]);
     const [showAccountList, setShowAccountList] = useState(false);
 
@@ -105,6 +106,19 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onSuccess }) => {
 
         // 保存记住密码设置
         localStorage.setItem(REMEMBER_PASSWORD_KEY, String(rememberPassword));
+
+        if (isForgotPassword) {
+            // 忘记密码发送重置邮件
+            console.log('Attempting reset password for:', cleanEmail);
+            const { resetPassword } = useAuthContext();
+            const { error: resetError } = await resetPassword(cleanEmail);
+            if (resetError) {
+                setError(`发送重置邮件失败: ${resetError.message}`);
+            } else {
+                setSuccessMessage('重置链接已发送到您的邮箱，请前往检查并重设密码。');
+            }
+            return;
+        }
 
         if (isLogin) {
             // 登录
@@ -175,7 +189,9 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onSuccess }) => {
                         name: cleanName || '新用户',
                         bio: '这是我的个性签名',
                         avatar_url: `https://picsum.photos/seed/${user.id}/200/200`,
-                        bg_image_url: `https://picsum.photos/seed/${user.id}-bg/800/400`
+                        bg_image_url: `https://picsum.photos/seed/${user.id}-bg/800/400`,
+                        email: user.email || cleanEmail,
+                        phone: user.phone || undefined
                     }, { onConflict: 'id' });
                 } catch (err) {
                     console.log('Profile creation handled by trigger or failed:', err);
@@ -235,7 +251,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onSuccess }) => {
                 </div>
 
                 {/* 登录方式切换 Tab */}
-                {isLogin && (
+                {isLogin && !isForgotPassword && (
                     <div className="flex bg-black/5 p-1 rounded-2xl mb-6 relative">
                         <div className={`absolute inset-y-1 w-[calc(50%-4px)] bg-white rounded-xl shadow-sm transition-all duration-300 ${loginMethod === 'phone' ? 'translate-x-[calc(100%+4px)]' : 'translate-x-0'}`}></div>
                         <button
@@ -255,7 +271,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onSuccess }) => {
 
                 {/* 表单 */}
                 <form onSubmit={handleSubmit} className="space-y-5">
-                    {!isLogin && (
+                    {!isLogin && !isForgotPassword && (
                         <div className="space-y-1">
                             <label className="text-[12px] font-bold text-ios-gray ml-1 uppercase tracking-wider">昵称</label>
                             <input
@@ -268,7 +284,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onSuccess }) => {
                         </div>
                     )}
 
-                    {loginMethod === 'email' || !isLogin ? (
+                    {loginMethod === 'email' || !isLogin || isForgotPassword ? (
                         <>
                             <div className="space-y-1 relative">
                                 <label className="text-[12px] font-bold text-ios-gray ml-1 uppercase tracking-wider">邮箱</label>
@@ -278,25 +294,37 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onSuccess }) => {
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
                                         placeholder="your@email.com"
-                                        required={loginMethod === 'email'}
+                                        required
                                         className="w-full bg-white border border-black/10 rounded-2xl px-5 py-4 text-[17px] focus:ring-2 focus:ring-ios-blue focus:border-transparent transition-all shadow-sm"
                                     />
-                                    {/* (Dropdown code omitted for brevity but should keep existing logic if needed) */}
                                 </div>
                             </div>
 
-                            <div className="space-y-1">
-                                <label className="text-[12px] font-bold text-ios-gray ml-1 uppercase tracking-wider">密码</label>
-                                <input
-                                    type="password"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    placeholder="••••••••"
-                                    required={loginMethod === 'email'}
-                                    minLength={6}
-                                    className="w-full bg-white border border-black/10 rounded-2xl px-5 py-4 text-[17px] focus:ring-2 focus:ring-ios-blue focus:border-transparent transition-all shadow-sm"
-                                />
-                            </div>
+                            {!isForgotPassword && (
+                                <div className="space-y-1">
+                                    <div className="flex justify-between items-center ml-1">
+                                        <label className="text-[12px] font-bold text-ios-gray uppercase tracking-wider">密码</label>
+                                        {isLogin && (
+                                            <button
+                                                type="button"
+                                                onClick={() => { setIsForgotPassword(true); setError(null); setSuccessMessage(null); }}
+                                                className="text-[12px] text-ios-blue font-bold px-2 py-1 bg-ios-blue/10 rounded-lg active:scale-95 transition-transform"
+                                            >
+                                                忘记密码?
+                                            </button>
+                                        )}
+                                    </div>
+                                    <input
+                                        type="password"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        placeholder="••••••••"
+                                        required
+                                        minLength={6}
+                                        className="w-full bg-white border border-black/10 rounded-2xl px-5 py-4 text-[17px] focus:ring-2 focus:ring-ios-blue focus:border-transparent transition-all shadow-sm"
+                                    />
+                                </div>
+                            )}
                         </>
                     ) : (
                         <>
@@ -338,7 +366,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onSuccess }) => {
                     )}
 
                     {/* 记住密码 (Only for email) */}
-                    {(loginMethod === 'email' || !isLogin) && (
+                    {(loginMethod === 'email' || !isLogin) && !isForgotPassword && (
                         <div className="flex items-center gap-2">
                             <button
                                 type="button"
@@ -376,24 +404,37 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onSuccess }) => {
                                 处理中...
                             </span>
                         ) : (
-                            isLogin ? '登录' : '注册'
+                            isForgotPassword ? '发送重置链接' : (isLogin ? '登录' : '注册')
                         )}
                     </button>
                 </form>
 
                 {/* 切换登录/注册 */}
                 <div className="text-center mt-8">
-                    <button
-                        onClick={() => {
-                            setIsLogin(!isLogin);
-                            setError(null);
-                            setSuccessMessage(null);
-                            setShowAccountList(false);
-                        }}
-                        className="text-ios-blue font-medium"
-                    >
-                        {isLogin ? '没有账号？立即注册' : '已有账号？立即登录'}
-                    </button>
+                    {isForgotPassword ? (
+                        <button
+                            onClick={() => {
+                                setIsForgotPassword(false);
+                                setError(null);
+                                setSuccessMessage(null);
+                            }}
+                            className="text-ios-blue font-medium"
+                        >
+                            想起来了？返回登录
+                        </button>
+                    ) : (
+                        <button
+                            onClick={() => {
+                                setIsLogin(!isLogin);
+                                setError(null);
+                                setSuccessMessage(null);
+                                setShowAccountList(false);
+                            }}
+                            className="text-ios-blue font-medium"
+                        >
+                            {isLogin ? '没有账号？立即注册' : '已有账号？立即登录'}
+                        </button>
+                    )}
                 </div>
 
                 {/* 分隔线 */}

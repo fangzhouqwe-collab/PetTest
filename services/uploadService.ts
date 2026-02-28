@@ -19,17 +19,8 @@ const generateFileName = (file: File): string => {
 
 // 上传视频到 Supabase Storage（如果未配置则使用 base64）
 export const uploadVideo = async (file: File): Promise<UploadResult> => {
-    // 检查文件大小
-    const maxSize = isSupabaseConfigured ? 100 * 1024 * 1024 : 50 * 1024 * 1024; // 云存储 100MB，本地 50MB
-    if (file.size > maxSize) {
-        return { success: false, error: `视频文件过大，请选择小于 ${isSupabaseConfigured ? '100' : '50'}MB 的视频` };
-    }
+    // 移除对文件大小和类型的限制，信任用户上传的任何视频类型及大小
 
-    // 检查文件类型
-    const allowedTypes = ['video/mp4', 'video/webm', 'video/quicktime'];
-    if (!allowedTypes.includes(file.type) && !file.type.startsWith('video/')) {
-        return { success: false, error: '不支持的视频格式，请使用 MP4、WebM 或 MOV 格式' };
-    }
 
     // 如果 Supabase 未配置，使用 base64
     if (!isSupabaseConfigured) {

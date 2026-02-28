@@ -2,6 +2,10 @@
 import React, { useState, useMemo } from 'react';
 import { MarketItem } from '../types';
 
+// ========================
+// 二手市集测试数据 (MARKET_ITEMS)
+// ========================
+
 export const MARKET_ITEMS: MarketItem[] = [
   {
     id: '1',
@@ -115,6 +119,7 @@ const MarketScreen: React.FC<{ items: MarketItem[], onItemClick: (item: MarketIt
         </div>
       </header>
 
+      {/* 高级筛选区 */}
       {showFilters && (
         <div className="bg-white border-b border-ios-separator/30 px-4 py-4 animate-in slide-in-from-top-2 duration-200">
           <h3 className="text-sm font-bold mb-3 text-ios-gray">高级筛选</h3>
@@ -126,6 +131,7 @@ const MarketScreen: React.FC<{ items: MarketItem[], onItemClick: (item: MarketIt
         </div>
       )}
 
+      {/* 宠物分类 */}
       <div className="flex justify-between items-center px-6 py-6 bg-white shadow-sm mb-4">
         {CATEGORIES.map(cat => (
           <button key={cat.label} onClick={() => setActiveCategory(cat.label)} className="flex flex-col items-center gap-1.5">
@@ -137,6 +143,7 @@ const MarketScreen: React.FC<{ items: MarketItem[], onItemClick: (item: MarketIt
         ))}
       </div>
 
+      {/* 二手市集瀑布流网格 */}
       <div className="grid grid-cols-2 gap-x-3 gap-y-5 px-4 pt-2 pb-24">
         {filteredItems.map(item => (
           <div key={item.id} className="flex flex-col group cursor-pointer" onClick={() => onItemClick(item)}>
@@ -160,7 +167,7 @@ const MarketScreen: React.FC<{ items: MarketItem[], onItemClick: (item: MarketIt
           </div>
         ))}
       </div>
-    </div >
+    </div>
   );
 };
 
