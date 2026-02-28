@@ -63,8 +63,8 @@ const FeedScreen: React.FC<FeedScreenProps> = ({ userProfile, posts, onConsultAI
   const { user } = useAuthContext();
 
   // 顶层四大模块扁平化及顺序定义
-  type MainTab = 'recommend' | 'local' | 'mall' | 'video';
-  const TAB_ORDER: MainTab[] = ['recommend', 'local', 'mall', 'video'];
+  type MainTab = 'following' | 'recommend' | 'local' | 'star' | 'live' | 'video' | 'mall';
+  const TAB_ORDER: MainTab[] = ['following', 'recommend', 'local', 'star', 'live', 'mall', 'video'];
 
   const [activeMainTab, setActiveMainTab] = useState<MainTab>('recommend');
 
@@ -230,24 +230,90 @@ const FeedScreen: React.FC<FeedScreenProps> = ({ userProfile, posts, onConsultAI
           </div>
         </div>
 
-        <div className="flex bg-ios-bg/20 shadow-inner rounded-full p-1 mb-1">
-          <button onClick={() => setActiveMainTab('recommend')} className={`flex-1 py-1.5 text-sm font-bold rounded-full transition-all ${activeMainTab === 'recommend' ? 'bg-ios-card shadow-sm text-ios-text' : 'text-ios-gray'}`}>
+        <div className="flex bg-ios-bg/20 shadow-inner rounded-full p-1 mb-1 overflow-x-auto no-scrollbar">
+          <button onClick={() => setActiveMainTab('following')} className={`flex-1 py-1.5 px-3 text-sm font-bold rounded-full transition-all whitespace-nowrap ${activeMainTab === 'following' ? 'bg-ios-card shadow-sm text-ios-text' : 'text-ios-gray'}`}>
+            关注
+          </button>
+          <button onClick={() => setActiveMainTab('recommend')} className={`flex-1 py-1.5 px-3 text-sm font-bold rounded-full transition-all whitespace-nowrap ${activeMainTab === 'recommend' ? 'bg-ios-card shadow-sm text-ios-text' : 'text-ios-gray'}`}>
             推荐
           </button>
-          <button onClick={() => setActiveMainTab('local')} className={`flex-1 py-1.5 text-sm font-bold rounded-full transition-all ${activeMainTab === 'local' ? 'bg-ios-card shadow-sm text-ios-text' : 'text-ios-gray'}`}>
+          <button onClick={() => setActiveMainTab('local')} className={`flex-1 py-1.5 px-3 text-sm font-bold rounded-full transition-all whitespace-nowrap ${activeMainTab === 'local' ? 'bg-ios-card shadow-sm text-ios-text' : 'text-ios-gray'}`}>
             同城
           </button>
-          <button onClick={() => setActiveMainTab('mall')} className={`flex-1 py-1.5 text-sm font-bold rounded-full transition-all ${activeMainTab === 'mall' ? 'bg-ios-card shadow-sm text-ios-text' : 'text-ios-gray'}`}>
+          <button onClick={() => setActiveMainTab('star')} className={`flex-1 py-1.5 px-3 text-sm font-bold rounded-full transition-all whitespace-nowrap ${activeMainTab === 'star' ? 'bg-ios-card shadow-sm text-ios-text text-amber-500' : 'text-ios-gray'}`}>
+            星宠
+          </button>
+          <button onClick={() => setActiveMainTab('live')} className={`flex-1 py-1.5 px-3 text-sm font-bold rounded-full transition-all whitespace-nowrap ${activeMainTab === 'live' ? 'bg-ios-card shadow-sm text-ios-text text-rose-500' : 'text-ios-gray'}`}>
+            直播
+          </button>
+          <button onClick={() => setActiveMainTab('mall')} className={`flex-1 py-1.5 px-3 text-sm font-bold rounded-full transition-all whitespace-nowrap ${activeMainTab === 'mall' ? 'bg-ios-card shadow-sm text-ios-text' : 'text-ios-gray'}`}>
             官方商城
           </button>
-          <button onClick={() => setActiveMainTab('video')} className={`flex-1 py-1.5 text-sm font-bold rounded-full transition-all ${activeMainTab === 'video' ? 'bg-ios-card shadow-sm text-ios-text' : 'text-ios-gray'}`}>
+          <button onClick={() => setActiveMainTab('video')} className={`flex-1 py-1.5 px-3 text-sm font-bold rounded-full transition-all whitespace-nowrap ${activeMainTab === 'video' ? 'bg-ios-card shadow-sm text-ios-text' : 'text-ios-gray'}`}>
             短视频
           </button>
         </div>
       </header>
 
       {/* 主视图渲染调度 */}
-      {activeMainTab === 'video' ? (
+      {activeMainTab === 'following' ? (
+        // ==========================
+        // 关注时间线
+        // ==========================
+        <div className="flex-1 flex flex-col items-center justify-center pt-24 pb-20 px-6 animate-in fade-in duration-300">
+          <div className="w-24 h-24 mb-6 bg-ios-bg rounded-full flex items-center justify-center border-4 border-ios-blue/20">
+            <span className="material-symbols-outlined text-ios-blue !text-[48px]">group_add</span>
+          </div>
+          <h2 className="text-xl font-bold mb-2">暂无关注动态</h2>
+          <p className="text-ios-gray text-center text-sm leading-relaxed max-w-[240px]">
+            去发现更多有趣的宠友并关注他们吧~
+          </p>
+          <button
+            className="mt-6 px-6 py-2.5 bg-ios-blue text-white font-bold rounded-full active:scale-95 transition-transform shadow-lg shadow-ios-blue/30"
+            onClick={() => setActiveMainTab('recommend')}
+          >
+            去推荐页看看
+          </button>
+        </div>
+      ) : activeMainTab === 'star' ? (
+        // ==========================
+        // 星宠排行榜骨架
+        // ==========================
+        <div className="flex-1 flex flex-col items-center justify-center pt-24 pb-20 px-6 animate-in fade-in duration-300">
+          <div className="w-24 h-24 mb-6 bg-gradient-to-tr from-amber-300 to-yellow-500 rounded-full flex items-center justify-center shadow-lg shadow-amber-400/30">
+            <span className="material-symbols-outlined text-white !text-[48px]">stars</span>
+          </div>
+          <h2 className="text-2xl font-bold mb-2">星宠排行榜</h2>
+          <p className="text-ios-gray text-center leading-relaxed">
+            看看本周最受欢迎的明星宠物。<br /> 星宠打榜模块正在酝酿中！
+          </p>
+          <button
+            className="mt-8 px-6 py-3 bg-ios-blue/10 text-ios-blue font-bold rounded-full active:scale-95 transition-transform"
+            onClick={() => setActiveMainTab('recommend')}
+          >
+            返回推荐列表
+          </button>
+        </div>
+      ) : activeMainTab === 'live' ? (
+        // ==========================
+        // 直播模块骨架
+        // ==========================
+        <div className="flex-1 flex flex-col items-center justify-center pt-24 pb-20 px-6 animate-in fade-in duration-300">
+          <div className="w-24 h-24 mb-6 bg-gradient-to-tr from-rose-500 to-orange-400 rounded-3xl flex items-center justify-center shadow-lg shadow-rose-500/30">
+            <span className="material-symbols-outlined text-white !text-[48px]">podcasts</span>
+          </div>
+          <h2 className="text-2xl font-bold mb-2">宠友直播间</h2>
+          <p className="text-ios-gray text-center leading-relaxed">
+            实时分享与萌宠的欢乐时光。<br /> 直播功能即将上线，敬请期待！
+          </p>
+          <button
+            className="mt-8 px-6 py-3 bg-ios-blue/10 text-ios-blue font-bold rounded-full active:scale-95 transition-transform"
+            onClick={() => setActiveMainTab('recommend')}
+          >
+            返回推荐列表
+          </button>
+        </div>
+      ) : activeMainTab === 'video' ? (
         // ==========================
         // 短视频模块骨架
         // ==========================

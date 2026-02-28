@@ -92,7 +92,20 @@ export const getPosts = async (options?: {
         return [];
     }
 
-    return (data || []).map((post: any) => {
+    // [Hotfix] 强力过滤异常数据（包含各种空格和特殊符号的非法帖子）
+    const filteredData = (data || []).filter((post: any) => {
+        // 屏蔽名为 Jian 的用户发布的一切内容
+        const profileName = post.profiles?.name || '';
+        if (profileName.toLowerCase().includes('jian')) return false;
+
+        // 屏蔽各种只有标点符号或单字符的垃圾测试贴
+        const t = (post.title || '').trim();
+        if (t === '。' || t === '.' || t.length <= 1) return false;
+
+        return true;
+    });
+
+    return filteredData.map((post: any) => {
         const profile = post.profiles;
         const comments = post.comments || [];
         const likes = post.likes || [];

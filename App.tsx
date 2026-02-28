@@ -114,8 +114,11 @@ const App: React.FC = () => {
   const [shareData, setShareData] = useState<{ title: string, data?: any } | null>(null);
 
   // 初始化测试消息数据和加载本地数据
-  // 初始化测试消息数据和加载本地数据
   useEffect(() => {
+    // 【临时修复】强制清除用户端遗留的“Jian的帖子”脏数据
+    localStorage.removeItem('petconnect_posts');
+    localStorage.removeItem('petconnect_market_items');
+
     testUserService.initTestMessages();
 
     // 只有在未认证且无用户时才加载本地存储的数据（演示模式）
@@ -306,7 +309,14 @@ const App: React.FC = () => {
         location: newPost.location
       });
       if (created) {
-        setPosts(prev => [created, ...prev]);
+        // [重构] 发布成功后强制重新拉取云端数据，确保本地与线上完全一致
+        // 这也将触发底层的“强力过滤网”，自动抹除“Jian”或其他残留异物
+        const latestPosts = await postService.getPosts();
+        if (latestPosts && latestPosts.length > 0) {
+          setPosts(latestPosts);
+        } else {
+          setPosts(prev => [created, ...prev]);
+        }
       }
     } else {
       // 演示模式：本地添加

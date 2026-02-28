@@ -453,7 +453,7 @@ const MarketScreen: React.FC<MarketScreenProps> = ({ items, onItemClick, onPubli
       {/* 全部分类搜索 Modal */}
       {showAllCategoriesModal && (
         <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-end animate-in fade-in duration-300">
-          <div className="bg-ios-card rounded-t-[32px] max-h-[85vh] flex flex-col animate-in slide-in-from-bottom duration-400 border-t border-ios-separator transition-all duration-300">
+          <div className="w-full bg-ios-card rounded-t-[32px] max-h-[85vh] flex flex-col animate-in slide-in-from-bottom duration-400 border-t border-ios-separator transition-all duration-300">
             <div className="w-12 h-1.5 bg-ios-separator/30 rounded-full mx-auto mt-3 mb-1"></div>
             <header className="px-6 py-4 flex items-center justify-between border-b border-ios-separator">
               <h2 className="text-xl font-bold">全部分类</h2>
