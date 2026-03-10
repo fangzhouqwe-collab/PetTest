@@ -38,3 +38,84 @@ ALTER TABLE public.market_items ADD COLUMN IF NOT EXISTS breed TEXT;
 ALTER TABLE public.market_items ALTER COLUMN price TYPE NUMERIC(20, 2);
 ALTER TABLE public.products ALTER COLUMN price TYPE NUMERIC(20, 2);
 ALTER TABLE public.orders ALTER COLUMN total_amount TYPE NUMERIC(20, 2);
+
+-- 废弃原先的 service_requests (可以在清理数据库时手动 drop，这里直接注释或覆盖建新表)
+-- DROP TABLE IF EXISTS public.service_requests CASCADE;
+
+-- 1. 兼职服务者入驻表 (简历卡片)
+CREATE TABLE IF NOT EXISTS public.service_workers (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    worker_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL UNIQUE,
+    real_name VARCHAR(100),
+    photos TEXT[] DEFAULT '{}',
+    title TEXT NOT NULL,
+    skills TEXT[] DEFAULT '{}',
+    base_price NUMERIC(10, 2) NOT NULL,
+    service_area TEXT NOT NULL,
+    bio_description TEXT NOT NULL,
+    is_verified BOOLEAN DEFAULT FALSE,
+    rating NUMERIC(3, 1) DEFAULT 5.0,
+    order_count INT DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 若您之前已建好了该表，可通过以下按需执行的方式热更新字段：
+-- ALTER TABLE public.service_workers ADD COLUMN IF NOT EXISTS real_name VARCHAR(100);
+-- ALTER TABLE public.service_workers ADD COLUMN IF NOT EXISTS photos TEXT[] DEFAULT '{}';
+
+
+-- 配置 RLS
+ALTER TABLE public.service_workers ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can view worker profiles" 
+    ON public.service_workers FOR SELECT 
+    USING (true);
+
+CREATE POLICY "Users can create their own worker profile" 
+    ON public.service_workers FOR INSERT 
+    WITH CHECK (auth.uid() = worker_id);
+
+CREATE POLICY "Workers can update their own profile" 
+    ON public.service_workers FOR UPDATE 
+    USING (auth.uid() = worker_id);
+
+-- 2. 雇主向兼职者的定向邀约/订单表
+CREATE TABLE IF NOT EXISTS public.service_orders (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    worker_profile_id UUID REFERENCES public.service_workers(id) ON DELETE CASCADE NOT NULL,
+    employer_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+    pet_id UUID REFERENCES public.pets(id) ON DELETE SET NULL,
+    service_type VARCHAR(50) NOT NULL,
+    service_time TIMESTAMPTZ NOT NULL,
+    location TEXT NOT NULL,
+    offer_price NUMERIC(10, 2) NOT NULL,
+    status VARCHAR(20) DEFAULT 'PENDING', -- PENDING(待确认), ACCEPTED(已接单), REJECTED(已拒绝), COMPLETED(已完成), CANCELLED(已取消)
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 配置 RLS
+ALTER TABLE public.service_orders ENABLE ROW LEVEL SECURITY;
+
+-- 雇主可以查自己的发单，兼职者可以查发给自己的邀约
+CREATE POLICY "Users can view relevant orders" 
+    ON public.service_orders FOR SELECT 
+    USING (
+        auth.uid() = employer_id OR 
+        auth.uid() IN (SELECT worker_id FROM public.service_workers WHERE id = worker_profile_id)
+    );
+
+-- 雇主可发起邀约
+CREATE POLICY "Employers can create orders" 
+    ON public.service_orders FOR INSERT 
+    WITH CHECK (auth.uid() = employer_id);
+
+-- 状态更新：雇主可取消(PENDING下)，兼职者可接单/拒单/完成订单
+CREATE POLICY "Users can update their relevant orders" 
+    ON public.service_orders FOR UPDATE 
+    USING (
+        auth.uid() = employer_id OR 
+        auth.uid() IN (SELECT worker_id FROM public.service_workers WHERE id = worker_profile_id)
+    );
+

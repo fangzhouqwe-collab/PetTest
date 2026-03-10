@@ -17,6 +17,9 @@ import FavoritesScreen from './components/FavoritesScreen';
 import AddressManager from './components/AddressManager';
 import OrderHistory from './components/OrderHistory';
 import HistoryScreen from './components/HistoryScreen';
+import WorkerLobbyScreen from './components/WorkerLobbyScreen';
+import BecomeWorkerScreen from './components/BecomeWorkerScreen';
+import WorkerDetailScreen from './components/WorkerDetailScreen';
 import { AuthProvider, useAuthContext } from './contexts/AuthContext';
 
 // 后端服务
@@ -112,6 +115,9 @@ const App: React.FC = () => {
   const [viewHistory, setViewHistory] = useState<(Post | MarketItem)[]>([]);
   const [favoriteItemIds, setFavoriteItemIds] = useState<string[]>([]);
   const [shareData, setShareData] = useState<{ title: string, data?: any } | null>(null);
+
+  // 兼职代走/代喂全局状态
+  const [selectedWorker, setSelectedWorker] = useState<ServiceWorker | null>(null);
 
   // 初始化测试消息数据和加载本地数据
   useEffect(() => {
@@ -509,7 +515,7 @@ const App: React.FC = () => {
           setSelectedPost(p);
           setViewHistory(prev => [p, ...prev.filter(i => i.id !== p.id)]);
           navigateTo(AppTab.POST_DETAIL);
-        }} onToggleLike={toggleLike} onShare={(t) => handleShare(t, { image: posts.find(p => p.title === t)?.image })} />;
+        }} onToggleLike={toggleLike} onShare={(t) => handleShare(t, { image: posts.find(p => p.title === t)?.image })} onServiceLobby={() => navigateTo(AppTab.WORKER_LOBBY)} />;
       case AppTab.MARKET:
         return <MarketScreen items={marketItems} onItemClick={(i) => {
           setSelectedItem(i);
@@ -685,11 +691,30 @@ const App: React.FC = () => {
           onNavigate={navigateTo}
           onPay={(id) => setOrders(p => p.map(o => o.id === id ? { ...o, status: 'completed' } : o))}
         />;
-      case AppTab.HISTORY:
-        return <HistoryScreen
-          historyItems={viewHistory}
+      case AppTab.WORKER_LOBBY:
+        return <WorkerLobbyScreen 
+          onBack={goBack} 
+          onBecomeWorker={() => navigateTo(AppTab.BECOME_WORKER)}
+          onViewWorker={(worker) => { 
+            setSelectedWorker(worker);
+            navigateTo(AppTab.WORKER_DETAIL);
+          }}
+        />;
+      case AppTab.BECOME_WORKER:
+        return <BecomeWorkerScreen 
+          onBack={goBack} 
+          onSuccess={() => { goBack(); }} 
+        />;
+      case AppTab.WORKER_DETAIL:
+        if (!selectedWorker) {
+           goBack();
+           return null;
+        }
+        return <WorkerDetailScreen 
+          worker={selectedWorker}
+          currentUserProfile={userProfile}
           onBack={goBack}
-          onClear={() => setViewHistory([])}
+          onBookSuccess={() => { goBack(); }}
         />;
       default:
         return <FeedScreen
@@ -700,11 +725,12 @@ const App: React.FC = () => {
           onShare={handleShare}
           onNotification={() => navigateTo(AppTab.NOTIFICATIONS)}
           onAddToCart={handleAddToCart}
+          onServiceLobby={() => navigateTo(AppTab.WORKER_LOBBY)}
         />;
     }
   };
 
-  const hideNav = [AppTab.AI_CHAT, AppTab.PUBLISH, AppTab.POST_DETAIL, AppTab.MARKET_DETAIL, AppTab.USER_CHAT, AppTab.NOTIFICATIONS, AppTab.CART, AppTab.ADDRESS, AppTab.ORDERS, AppTab.HISTORY].includes(currentTab);
+  const hideNav = [AppTab.AI_CHAT, AppTab.PUBLISH, AppTab.POST_DETAIL, AppTab.MARKET_DETAIL, AppTab.USER_CHAT, AppTab.NOTIFICATIONS, AppTab.CART, AppTab.ADDRESS, AppTab.ORDERS, AppTab.HISTORY, AppTab.WORKER_LOBBY, AppTab.BECOME_WORKER, AppTab.WORKER_DETAIL].includes(currentTab);
 
   return (
     <div className="flex flex-col min-h-screen bg-ios-bg transition-colors duration-500">

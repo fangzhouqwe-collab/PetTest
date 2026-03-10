@@ -57,14 +57,15 @@ interface FeedScreenProps {
   onShare?: (title: string) => void;
   onNotification?: () => void;
   onAddToCart?: (product: Product) => void;
+  onServiceLobby?: () => void;
 }
 
-const FeedScreen: React.FC<FeedScreenProps> = ({ userProfile, posts, onConsultAI, onPostClick, onToggleLike, onShare, onNotification, onAddToCart }) => {
+const FeedScreen: React.FC<FeedScreenProps> = ({ userProfile, posts, onConsultAI, onPostClick, onToggleLike, onShare, onNotification, onAddToCart, onServiceLobby }) => {
   const { user } = useAuthContext();
 
   // 顶层四大模块扁平化及顺序定义
-  type MainTab = 'following' | 'recommend' | 'local' | 'star' | 'live' | 'video' | 'mall';
-  const TAB_ORDER: MainTab[] = ['following', 'recommend', 'local', 'star', 'live', 'mall', 'video'];
+  type MainTab = 'following' | 'recommend' | 'local' | 'service' | 'star' | 'live' | 'video' | 'mall';
+  const TAB_ORDER: MainTab[] = ['following', 'recommend', 'local', 'service', 'star', 'live', 'mall', 'video'];
 
   const [activeMainTab, setActiveMainTab] = useState<MainTab>('recommend');
 
@@ -239,6 +240,9 @@ const FeedScreen: React.FC<FeedScreenProps> = ({ userProfile, posts, onConsultAI
           </button>
           <button onClick={() => setActiveMainTab('local')} className={`flex-1 py-1.5 px-3 text-sm font-bold rounded-full transition-all whitespace-nowrap ${activeMainTab === 'local' ? 'bg-ios-card shadow-sm text-ios-text' : 'text-ios-gray'}`}>
             同城
+          </button>
+          <button onClick={() => { if(onServiceLobby) onServiceLobby(); else setActiveMainTab('service'); }} className={`flex-1 py-1.5 px-3 text-sm font-bold rounded-full transition-all whitespace-nowrap ${activeMainTab === 'service' ? 'bg-ios-card shadow-sm text-ios-text text-green-500' : 'text-ios-gray'}`}>
+            兼职代喂
           </button>
           <button onClick={() => setActiveMainTab('star')} className={`flex-1 py-1.5 px-3 text-sm font-bold rounded-full transition-all whitespace-nowrap ${activeMainTab === 'star' ? 'bg-ios-card shadow-sm text-ios-text text-amber-500' : 'text-ios-gray'}`}>
             星宠

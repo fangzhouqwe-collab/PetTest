@@ -4,6 +4,7 @@ import { supabase, getCurrentUserId, isSupabaseConfigured } from '../lib/supabas
 // 前端使用的商品类型
 export interface MarketItem {
     id: string;
+    userId?: string;
     name: string;
     image: string;
     price: number;
